@@ -1,0 +1,20 @@
+title: Get current user using Workspace API
+description: description
+categories: 
+  - workspace
+displayName: Java
+steps:
+  - file: "src/main/java/Main.java"
+    highlight: "0-47"
+  - file: "src/main/java/Main.java"
+    highlight: "11-16"
+  - file: "src/main/java/Main.java"
+    highlight: "19-20"
+  - file: "src/main/java/Main.java"
+    highlight: "21-28"
+  - file: "src/main/java/Main.java"
+    highlight: "30-36"
+  - file: "src/main/java/Main.java"
+    highlight: "38-39"
+  - file: "src/main/java/Main.java"
+    highlight: "41-41"

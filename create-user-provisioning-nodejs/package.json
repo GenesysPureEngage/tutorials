@@ -1,0 +1,13 @@
+{
+	"name": "create-user-provisioning-nodejs",
+	"version": "1.0.0",
+	"keywords": ["util", "functional", "server", "client", "browser"],
+	"author": "miremnev",
+	"contributors": [],
+	"dependencies": {
+		"provisioning_api": "file:../sdk/provisioning/javascript"
+	},
+	"scripts": {
+		"start": "node main.js"
+	}
+}

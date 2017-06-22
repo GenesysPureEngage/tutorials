@@ -1,0 +1,22 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.8'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'Main'
+}
+
+repositories {
+    mavenCentral()
+	
+	flatDir {
+		dirs '../sdk/provisioning/java/target'
+	}
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+	
+	compile ':provisioning-api:1.0.0'
+}

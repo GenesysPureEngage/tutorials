@@ -1,0 +1,32 @@
+.tutorial{:data =>{:title=>'Create user with Provisioning API'}}
+    .step{:data=>{:title=>'Overview'}}
+        :markdown
+            This example shows how to log in and create a user using the Provisioning API.
+
+    .step{:data=>{:title=>'Initialize API Client'}}
+        :markdown
+            Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
+
+    .step{:data=>{:title=>'Create LoginApi instance'}}
+        :markdown
+            Creating instance of LoginApi using the ApiClient.
+
+    .step{:data=>{:title=>'Logging in Provisioning API'}}
+        :markdown
+            Logging in using our username and password
+
+    .step{:data=>{:title=>'Obtaining Provisioning API Session'}}
+        :markdown
+            Obtaining sessionId and setting PROVISIONING_SESSIONID cookie to the client
+
+    .step{:data=>{:title=>'Creating UsersApi instance'}}
+        :markdown
+            Creating instance of UsersApi using the ApiClient
+
+    .step{:data=>{:title=>'Describing and creating a user'}}
+        :markdown
+            Filling necessary information and creating a user using UsersApi instance
+
+    .step{:data=>{:title=>'Logging out'}}
+        :markdown
+            Ending our Provisioning API session

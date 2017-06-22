@@ -1,0 +1,20 @@
+title: Get current user using Workspace API
+description: description
+categories: 
+  - workspace
+displayName: Node.Js
+steps:
+  - file: "main.js"
+    highlight: "0-36"
+  - file: "main.js"
+    highlight: "3-8"
+  - file: "main.js"
+    highlight: "10-10"
+  - file: "main.js"
+    highlight: "11-19"
+  - file: "main.js"
+    highlight: "20-22"
+  - file: "main.js"
+    highlight: "23-30"
+  - file: "main.js"
+    highlight: "32-32"

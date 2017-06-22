@@ -1,0 +1,23 @@
+title: Create user using Provisioning API
+description: description
+categories: 
+  - provisioning
+displayName: Java
+steps:
+  - file: "src/main/java/Main.java"
+    highlight: "0-63"
+  - file: "src/main/java/Main.java"
+    highlight: "15-20"
+  - file: "src/main/java/Main.java"
+    highlight: "23-24"
+  - file: "src/main/java/Main.java"
+    highlight: "25-32"
+  - file: "src/main/java/Main.java"
+    highlight: "33-39"
+  - file: "src/main/java/Main.java"
+    highlight: "41-42"
+  - file: "src/main/java/Main.java"
+    highlight: "43-55"
+  - file: "src/main/java/Main.java"
+    highlight: "57-57"
+    
