@@ -1,15 +1,15 @@
-import io.swagger.client.ApiClient;
-import io.swagger.client.ApiResponse;
-import io.swagger.client.api.SessionApi;
-import io.swagger.client.model.ApiSuccessResponse;
-import io.swagger.client.model.CurrentUser;
-import io.swagger.client.model.Login;
+import com.genesys.common.ApiClient;
+import com.genesys.common.ApiResponse;
+import com.genesys.workspace.api.SessionApi;
+import com.genesys.workspace.model.ApiSuccessResponse;
+import com.genesys.workspace.model.CurrentUser;
+import com.genesys.workspace.model.Login;
 import java.util.Optional;
 
 public class Main {
     public static void main() {
-		final String apiKey = "key";
-		final String workspaceUrl = "url";
+		final String apiKey = "your_API_key";
+		final String workspaceUrl = "https://api-usw1.genhtcc.com";
 		
 		final ApiClient client = new ApiClient();
 		client.setBasePath(workspaceUrl);
