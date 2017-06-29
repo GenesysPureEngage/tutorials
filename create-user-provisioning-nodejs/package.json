@@ -5,7 +5,7 @@
 	"author": "miremnev",
 	"contributors": [],
 	"dependencies": {
-		"provisioning_api": "file:../sdk/provisioning/javascript"
+		"provisioning_api": "git+https://github.com/GenesysPureEngage/provisioning-client-js.git"
 	},
 	"scripts": {
 		"start": "node main.js"
