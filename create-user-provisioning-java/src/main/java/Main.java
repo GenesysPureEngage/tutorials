@@ -1,19 +1,19 @@
-import io.swagger.client.ApiClient;
-import io.swagger.client.ApiResponse;
-import io.swagger.client.api.LoginApi;
-import io.swagger.client.api.UsersApi;
-import io.swagger.client.model.AddUser;
-import io.swagger.client.model.ApiSuccessResponse;
-import io.swagger.client.model.Login;
-import io.swagger.client.model.LoginSuccessResponse;
+import com.genesys.common.ApiClient;
+import com.genesys.common.ApiResponse;
+import com.genesys.provisioning.api.LoginApi;
+import com.genesys.provisioning.api.UsersApi;
+import com.genesys.provisioning.model.AddUser;
+import com.genesys.provisioning.model.ApiSuccessResponse;
+import com.genesys.provisioning.model.Login;
+import com.genesys.provisioning.model.LoginSuccessResponse;
 import java.util.Arrays;
 import java.util.Optional;
 
 public class Main {
 	public static void main(String[] args) {
 
-		final String apiKey = "key";
-		final String provisionUrl = "url";
+		final String apiKey = "your_API_key";
+		final String provisionUrl = "https://api-usw1.genhtcc.com";
 
 		final ApiClient client = new ApiClient();
 		client.setBasePath(provisionUrl);
