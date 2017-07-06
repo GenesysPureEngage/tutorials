@@ -1,0 +1,26 @@
+title: Activate Channels and change state to ready
+description: description
+categories: 
+  - workspace
+displayName: Java
+steps:
+  - file: "src/main/java/Main.java"
+    highlight: "0-66"
+  - file: "src/main/java/Main.java"
+    highlight: "14-19"
+  - file: "src/main/java/Main.java"
+    highlight: "22-22"
+  - file: "src/main/java/Main.java"
+    highlight: "24-31"
+  - file: "src/main/java/Main.java"
+    highlight: "33-39"
+  - file: "src/main/java/Main.java"
+    highlight: "41-41"
+  - file: "src/main/java/Main.java"
+    highlight: "43-51"
+  - file: "src/main/java/Main.java"
+    highlight: "53-53"
+  - file: "src/main/java/Main.java"
+    highlight: "55-58"
+  - file: "src/main/java/Main.java"
+    highlight: "60-60"
