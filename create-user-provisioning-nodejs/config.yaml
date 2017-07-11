@@ -1,5 +1,5 @@
 title: Create user using Provisioning API
-description: description
+description: This example shows how to log in and create a user using the Provisioning API
 categories: 
   - provisioning
 displayName: NodeJS

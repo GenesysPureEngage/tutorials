@@ -1,5 +1,5 @@
 title: Activate Channels and change state to ready
-description: description
+description: This example shows how to log in, activate channels and change state using the Workspace API
 categories: 
   - workspace
 displayName: Node.Js
