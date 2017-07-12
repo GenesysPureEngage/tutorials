@@ -3,18 +3,3 @@ description: This example shows how to log in and create a user using the Provis
 categories: 
   - provisioning
 displayName: NodeJS
-steps:
-  - file: "src/main.js"
-    highlight: "0-43"
-  - file: "src/main.js"
-    highlight: "3-8"
-  - file: "src/main.js"
-    highlight: "10-10"
-  - file: "src/main.js"
-    highlight: "11-19"
-  - file: "src/main.js"
-    highlight: "20-22"
-  - file: "src/main.js"
-    highlight: "23-38"
-  - file: "src/main.js"
-    highlight: "40-40"

@@ -3,18 +3,3 @@ description: This example shows how to log in and get a current user information
 categories: 
   - workspace
 displayName: Node.Js
-steps:
-  - file: "src/main.js"
-    highlight: "0-36"
-  - file: "src/main.js"
-    highlight: "3-8"
-  - file: "src/main.js"
-    highlight: "10-10"
-  - file: "src/main.js"
-    highlight: "11-19"
-  - file: "src/main.js"
-    highlight: "20-22"
-  - file: "src/main.js"
-    highlight: "23-30"
-  - file: "src/main.js"
-    highlight: "32-32"
