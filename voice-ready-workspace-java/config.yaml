@@ -1,5 +1,5 @@
 title: Activate Channels and change state to ready
-description: This example shows how to log in, activate channels and change state using the Workspace API
+description: This example shows how to log in, activate channels and change state using the Workspace API. In this example we use CometD to recieve events when the server is done activating channels and changing state to ready.
 categories: 
   - workspace
 displayName: Java
