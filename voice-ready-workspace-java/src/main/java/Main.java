@@ -38,7 +38,7 @@ public class Main {
 
             //region Obtaining Workspace API Session
             //Obtaining session cookie and setting the cookie to the client
-            Optional<String> session = responseWithHttpInfo.getHeaders().get("set-cookie").stream().filter( v -> v.startsWith("WWE_SESSIONID")).findFirst();
+            Optional<String> session = responseWithHttpInfo.getHeaders().get("set-cookie").stream().filter( v -> v.startsWith("WORKSPACE_SESSIONID")).findFirst();
             if(session.isPresent()) {
                 client.addDefaultHeader("Cookie", session.get());
             }

@@ -27,7 +27,7 @@ sessionApi.login({
     else {
         //region Obtaining Workspace API Session
         //Obtaining session cookie and setting the cookie to the client
-        const session = resp.headers['set-cookie'].find(v => v.startsWith('WWE_SESSIONID'));
+        const session = resp.headers['set-cookie'].find(v => v.startsWith('WORKSPACE_SESSIONID'));
         workspaceClient.defaultHeaders.Cookie = session;
 
         //region Current user information
