@@ -9,13 +9,13 @@ const provisioningClient = new provisioning.ApiClient();
 provisioningClient.basePath = provisioningrl;
 provisioningClient.defaultHeaders = { 'x-api-key': apiKey };
 
-//region Create LoginApi instance
-//Creating instance of LoginApi using the ApiClient.
-const loginApi = new provisioning.LoginApi(provisioningClient);
+//region Create SessionApi instance
+//Creating instance of SessionApi using the ApiClient.
+const sessionApi = new provisioning.SessionApi(provisioningClient);
 
 //region Logging in Provisioning API
 //Logging in using our username and password
-loginApi.login({
+sessionApi.login({
   "domain_username": "username",
   "password": "password"
 }, (err, data, resp) => {
@@ -53,6 +53,6 @@ loginApi.login({
 
             //region Logging out
             //Ending our Provisioning API session
-            loginApi.logout();
+            sessionApi.logout();
 	}
 });
