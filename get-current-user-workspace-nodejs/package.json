@@ -11,7 +11,7 @@
     "author": "miremnev",
     "contributors": [],
     "dependencies": {
-        "workspace_api": "git+https://github.com/GenesysPureEngage/workspace-client-js.git"
+        "genesys-workspace-client-js": "1.*.*",
     },
     "scripts": {
         "start": "node src/main.js"

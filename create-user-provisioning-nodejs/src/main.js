@@ -1,4 +1,4 @@
-const provisioning = require('provisioning_api');
+const provisioning = require('genesys-provisioning-client-js');
 
 //region Initialize API Client
 //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
