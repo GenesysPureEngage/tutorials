@@ -1,4 +1,4 @@
-const workspace = require('workspace_api');
+const workspace = require('genesys-workspace-client-js');
 const cometdLib = require('cometd');
 const util = require('util');
 const url = require('url');

@@ -2,18 +2,18 @@
 	"name": "create-user-provisioning-nodejs",
 	"version": "1.0.0",
 	"keywords": [
-		"util",
-		"functional",
-		"server",
-		"client",
-		"browser"
+            "util",
+            "functional",
+            "server",
+            "client",
+            "browser"
 	],
 	"author": "miremnev",
 	"contributors": [],
 	"dependencies": {
-		"provisioning_api": "git+https://github.com/GenesysPureEngage/provisioning-client-js.git"
+            "genesys-provisioning-client-js": "1.*.*"
 	},
 	"scripts": {
-		"start": "node src/main.js"
+            "start": "node src/main.js"
 	}
 }

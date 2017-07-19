@@ -1,4 +1,4 @@
-const workspace = require('workspace_api');
+const workspace = require('genesys-workspace-client-js');
 
 //region Initialize API Client
 //Create and setup ApiClient instance with your ApiKey and Workspace API URL.
