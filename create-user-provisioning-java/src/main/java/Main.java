@@ -14,8 +14,8 @@ public class Main {
 
         //region 1 Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-        final String apiKey = "your_API_key";
-        final String provisionUrl = "https://api-usw1.genhtcc.com";
+        final String apiKey = "<api key>";
+        final String provisionUrl = "https://<api url>/provisioning/v3";
 
         final ApiClient client = new ApiClient();
         client.setBasePath(provisionUrl);

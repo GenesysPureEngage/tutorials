@@ -10,8 +10,8 @@ public class Main {
     public static void main() {
         //region Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Workspace API URL.
-        final String apiKey = "your_API_key";
-        final String workspaceUrl = "https://api-usw1.genhtcc.com";
+        final String apiKey = "<api key>";
+        final String workspaceUrl = "https://<api url>/workspace/v3";
 
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);

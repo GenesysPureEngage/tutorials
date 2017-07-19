@@ -8,6 +8,8 @@ import com.genesys.workspace.model.ApiSuccessResponse;
 import com.genesys.workspace.model.ChannelsData;
 import com.genesys.workspace.model.CurrentUser;
 import com.genesys.workspace.model.LoginData;
+import com.genesys.workspace.model.ReadyData;
+import com.genesys.workspace.model.VoicereadyData;
 
 import org.cometd.bayeux.Message;
 import org.cometd.bayeux.client.ClientSessionChannel;
@@ -30,8 +32,8 @@ public class Main {
     public static void main(String[] args) {
         //region Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Workspace API URL.
-        final String apiKey = "your API key";
-        final String workspaceUrl = "workspace url";
+        final String apiKey = "<api key>";
+        final String workspaceUrl = "https://<api url>/workspace/v3";
 		
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);
@@ -39,15 +41,16 @@ public class Main {
 
         try {
         	
-            //region Create SessionApi instance
-            //Creating instance of SessionApi using the ApiClient.
+            //region Create SessionApi and VoiceApi instances
+            //Creating instances of SessionApi and VoiceApi using the ApiClient. 
             final SessionApi sessionApi = new SessionApi(client);
+            final VoiceApi voiceApi = new VoiceApi(client);
 
             //region Logging in Workspace API
             //Logging in using username and password
             LoginData loginData = new LoginData();
-            loginData.setUsername("username");
-            loginData.setPassword("password");
+            loginData.setUsername("<agent username>");
+            loginData.setPassword("<agent password>");
             ApiResponse<ApiSuccessResponse> responseWithHttpInfo = sessionApi.loginWithHttpInfo(loginData);
             ApiSuccessResponse body = responseWithHttpInfo.getData();
             if(body.getStatus().getCode() != 0) {
@@ -101,35 +104,20 @@ public class Main {
 						if(messageData.get("messageType").equals("DnStateChanged")) {
 							
 							Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
-							//region Create VoiceApi instance
-							//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
+							
+							//region Handle Different State changes
+							//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'. Then once it is done changing the state to ready it will send another message with the agent state being 'Ready'.
 							if(dn.get("agentState").equals("NotReady")) {
 								System.out.println("Channels activated");
 								System.out.println("Changing agent state...");
-								//region Change agent state
-								//Changing agent state to ready
-								final VoiceApi voiceApi = new VoiceApi(client);
-								try {
-									ApiSuccessResponse response = voiceApi.setAgentStateReady();
-									if(response.getStatus().getCode() != 0) {
-										System.err.println("Cannot change agent state");
-									}
-								} catch(ApiException ex) {
-									System.err.println(ex);
-								}
+								
+								makeAgentReady(voiceApi);
 								
 							} else if(dn.get("agentState").equals("Ready")) {
 								System.out.println("Agent state changed to Ready");
-								//region Logging out and Disconnecting
+								//region Finishing up
 								//Now that the agent state is changed to 'Ready' to program is done so you can disconnect CometD and logout.
-								bayeuxClient.disconnect();
-								
-								try {
-									sessionApi.logout();
-								} catch(ApiException ex) {
-									System.err.println("Cannot log out");
-									System.err.println(ex);
-								}
+								disconnectAndLogout(bayeuxClient, sessionApi);
 								
 								System.out.println("done");
 								System.exit(0);
@@ -138,34 +126,17 @@ public class Main {
 						
 					}, (ClientSessionChannel channel, Message message) -> {
 						//region Subscription Success
-						//Make sure event handler has been successfully subscribed before activating channels.
+						//Make sure that the event handler has been successfully subscribed before activating channels.
 						if(message.isSuccessful()) {
-							try {
-								//region Current user information
-								//Obtaining current user information such as the employee ID using SessionApi.
-								CurrentUser user = sessionApi.getCurrentUser();
-								
-								System.out.println("Activating channels...");
-								//region Activate Channels
-								//Activating channels for the user using employee ID and agent login.
-								ActivatechannelsData data = new ActivatechannelsData();
-								data.setAgentId(user.getData().getUser().getEmployeeId());
-								data.setDn(user.getData().getUser().getAgentLogin());
-								ChannelsData channelsData = new ChannelsData();
-								channelsData.data(data);
-								ApiSuccessResponse response = sessionApi.activateChannels(channelsData);
-								if(response.getStatus().getCode() != 0) {
-									System.err.println("Cannot activate channels");
-								}
-							} catch(ApiException ex) {
-								System.err.println("Cannot activate channels");
-								System.err.println(ex);
-							}
+							
+							System.out.println("Activating channels...");
+							activateChannels(sessionApi);
+							
 						} else {
 							System.err.println("Channel subscription failed");
+							System.exit(1);
 						}
 					});
-					
 					
 					
 				} else {
@@ -176,6 +147,63 @@ public class Main {
             
         } catch(Exception ex) {
             System.err.println(ex);
+            System.exit(1);
         }
+    }
+    
+    
+    public static void activateChannels(SessionApi sessionApi) {
+    	try {
+			//region Current user information
+			//Obtaining current user information such as the employee ID using the SessionApi.
+			CurrentUser user = sessionApi.getCurrentUser();
+			
+			//region Activate Channels
+			//Activating channels for the user using employee ID and agent login.
+			ActivatechannelsData data = new ActivatechannelsData();
+			data.setAgentId(user.getData().getUser().getEmployeeId());
+			data.setDn(user.getData().getUser().getAgentLogin());
+			ChannelsData channelsData = new ChannelsData();
+			channelsData.data(data);
+			ApiSuccessResponse response = sessionApi.activateChannels(channelsData);
+			if(response.getStatus().getCode() != 0) {
+				System.err.println("Cannot activate channels");
+			}
+		} catch(ApiException ex) {
+			System.err.println("Cannot activate channels");
+			System.err.println(ex);
+			System.exit(1);
+		}
+    }
+    
+    public static void makeAgentReady(VoiceApi voiceApi) {
+		//region Change agent state
+		//Changing agent state to ready
+		try {
+			VoicereadyData data = new VoicereadyData();
+			ApiSuccessResponse response = voiceApi.setAgentStateReady(new ReadyData().data(data));
+			if(response.getStatus().getCode() != 0) {
+				System.err.println("Cannot change agent state");
+			}
+		} catch(ApiException ex) {
+			System.err.println("Cannot make agent ready");
+			System.err.println(ex);
+			System.exit(1);
+		}
+    }
+    
+    public static void disconnectAndLogout(BayeuxClient bayeuxClient, SessionApi sessionApi) {
+    	//region Disconnecting and Logging Out
+		//Using the BayeuxClient and SessionApi to disconnect CometD and logout of the workspace session.
+		bayeuxClient.disconnect();
+		
+		try {
+			sessionApi.logout();
+		} catch(ApiException ex) {
+			System.err.println("Cannot log out");
+			System.err.println(ex);
+			System.exit(1);
+		}
+		
     }
 }
