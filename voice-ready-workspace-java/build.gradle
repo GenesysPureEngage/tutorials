@@ -13,12 +13,14 @@ repositories {
     flatDir {
         dirs '../sdk/provisioning/java/target'
         dirs '../sdk/workspace/java/target'
+        dirs '../sdk/authorization/java/target'
     }
  }
  
 dependencies {
     testCompile 'junit:junit:4.10'
     compile ':workspace-api:1.0.0'
+    compile ':authorization-api:1.0.0'
     compile 'org.cometd.java:cometd-api:1.1.5'
     compile 'org.cometd.java:cometd-java-client:3.1.2'
     compile 'org.cometd.java:bayeux-api:3.1.2'

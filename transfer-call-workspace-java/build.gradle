@@ -11,7 +11,6 @@ if (!hasProperty('mainClass')) {
 repositories {
     mavenCentral()
     flatDir {
-        dirs '../sdk/provisioning/java/target'
         dirs '../sdk/workspace/java/target'
         dirs '../sdk/authorization/java/target'
     }
@@ -25,7 +24,7 @@ dependencies {
     compile 'org.cometd.java:cometd-java-client:3.1.2'
     compile 'org.cometd.java:bayeux-api:3.1.2'
     compile 'org.eclipse.jetty:jetty-client:9.4.6.v20170531'
-    
+    compile 'com.squareup.okhttp:okhttp:2.7.5'
 }
 
 

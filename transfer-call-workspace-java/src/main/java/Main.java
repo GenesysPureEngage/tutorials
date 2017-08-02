@@ -3,7 +3,16 @@ import com.genesys.common.ApiResponse;
 import com.genesys.common.ApiException;
 import com.genesys.workspace.api.SessionApi;
 import com.genesys.workspace.api.VoiceApi;
-import com.genesys.workspace.model.*;
+import com.genesys.workspace.model.ActivatechannelsData;
+import com.genesys.workspace.model.ApiSuccessResponse;
+import com.genesys.workspace.model.ChannelsData;
+import com.genesys.workspace.model.CurrentSession;
+import com.genesys.workspace.model.InlineResponse200;
+import com.genesys.workspace.model.Call;
+import com.genesys.workspace.model.InitiateTransferData;
+import com.genesys.workspace.model.VoicecallsidinitiatetransferData;
+import com.genesys.workspace.model.CompleteTransferData;
+import com.genesys.workspace.model.VoicecallsidcompletetransferData;
 
 import com.genesys.authorization.api.AuthenticationApi;
 import com.genesys.authorization.model.DefaultOAuth2AccessToken;
@@ -15,21 +24,27 @@ import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.transport.LongPollingTransport;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.HashSet;
 import java.util.Arrays;
+import java.util.Base64;
+
 import java.net.URI;
 import java.net.HttpCookie;
 import java.net.CookieManager;
-import java.util.Base64;
 
 public class Main {
 	
     public static void main(String[] args) {
+    	new Thread(() -> {
+    		try {Thread.sleep(20000);} catch(Exception e){}
+    		System.exit(0);
+    	}).start();
     	
     	final String apiKey = "<api key>";
         
@@ -41,6 +56,8 @@ public class Main {
         
         final String username = "agent-<consult agent number>";
         final String password = "<agent password>";
+        
+        final String consultAgentNumber = "6504772885";
 		
 		
 		//region Initialize Workspace Client
@@ -89,6 +106,7 @@ public class Main {
             
             System.out.println("Got workspace session id");
             
+            
             //region Creating HttpClient
             //Conifuring a Jetty HttpClient which will be used for CometD.
             final SslContextFactory sslContextFactory = new SslContextFactory();
@@ -117,95 +135,138 @@ public class Main {
 					//region Subscribing to Channel
 					//Once the handshake is successful you may subscribe to a CometD channel to get events. 	
 					bayeuxClient.getChannel("/workspace/v3/voice").subscribe(new  ClientSessionChannel.MessageListener() {
-						private boolean hasHeld = false;
+						
+						//region Setting up Message Listener
+						//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 						private boolean hasActivatedChannels = false;
+						private boolean hasCalledInitiateTransfer = false;
+						private boolean hasCalledCompleteTransfer = false;
+						
+						private int actionsCompleted = 0;
+						
+						private String consultConnId = null;
+						private String parentConnId = null;
 						
 						@Override public void onMessage(ClientSessionChannel channel, Message message) {
+							
 							//region Receiving Events
 							//Here CometD events are handled. The Message object contains data that is stored as a map. Getting the 'messageType' will tell you the type of message.
 							Map<String, Object> messageData = (Map<String, Object>) message.getDataAsMap();
 							
-							if(messageData.get("messageType").equals("CallStateChanged")) {
+							if(messageData.get("messageType").equals("DnStateChanged")) {
+								
+								Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
+								
+								//region Activating Channels Event
+								//The first DnStateChanged event that is either 'Ready' or 'NotReady' is assumed to be cause by the server activating channels.
+								if(!hasActivatedChannels && (dn.get("agentState").equals("Ready") || dn.get("agentState").equals("NotReady")) ) {
+									System.out.println("Channels activated");
+									//region Getting Calls
+									//Here you get calls using the voice api.
+									//In this tutorial you assume that there is one established call.
+									//If not you throw an error.
+									System.out.println("Getting calls...");
+									
+									List<Call> calls = getCalls(voiceApi);
+									
+									Optional<Call> establishedCall = calls.stream().filter( c -> c.getState().equals("Established")).findFirst();
+									
+									if(establishedCall.isPresent()) {
+										System.out.println("Initiating Transfer...");
+										initiateTransfer(voiceApi, establishedCall.get().getConnId(), consultAgentNumber);
+										parentConnId = establishedCall.get().getConnId();
+										hasCalledInitiateTransfer = true;
+									} else {
+										System.out.println("No established call");
+										System.exit(1);
+									}
+									
+									hasActivatedChannels = true;
+								}
+									
+							} else if(messageData.get("messageType").equals("CallStateChanged")) {
 								//region Get Call Info
 								//The call id and state are stored in a map with the key 'call' in message data.
 								Map<String, Object> call = (Map<String, Object>) messageData.get("call");
 								String callId = call.get("id").toString();
 								String callState = call.get("state").toString();
-								String capabilities = "";
-								capabilities = Arrays.asList((Object[]) call.get("capabilities")).toString();
+								String capabilities = Arrays.asList((Object[]) call.get("capabilities")).toString();
 								
-								
-								if(callState.equals("Ringing")) {
-									//region Ringing
-									//If the call state is changed to 'Ringing' this means there is an incoming call and you can answer it.
-									System.out.println("Received call: ");
+								if(callState.equals("Dialing")) {
+									//region Dialing
+									//After the transfer is initiated, you will get a dialing event for the new call
+									System.out.println("Dialing");
 									System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
 									
-									System.out.println("Answering...");
-									answerCall(voiceApi, callId);
-								} else if(callState.equals("Established")) {
+									if(hasCalledInitiateTransfer) {
+										consultConnId = callId;
+									}
+									
+								} if(callState.equals("Established")) {
 									//region Established
-									//When the call state is 'Established' this means that the call is in progress. The state is set to 'Established' both when the call is first answered and when the call is retrieved after holding so you must specify which scenario is taking place by setting the 'hasHeld' variable to true after the call has been held.
-									if(!hasHeld) {
+									//When the call state is 'Established' this means that the call is in progress.
+									//The state is set to 'Established' both when the call is first answered and when the call is retrieved after holding.
+									if(hasCalledInitiateTransfer && callId.equals(consultConnId)) {
 										System.out.println("Answered");
 										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
-										
-										System.out.println("Holding...");
-										holdCall(voiceApi, callId);
-										hasHeld = true;
-									} else {
-										System.out.println("Retrieved");
-										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
-										
-										System.out.println("Releasing...");
-										releaseCall(voiceApi, callId);
+										actionsCompleted ++;
 									}
-								
+									
+									
 								} else if(callState.equals("Held")) {
 									//region Held
-									//The call state is changed to 'Held' when you hold the call. Now you can retrieve the call when you are ready.
-									System.out.println("Held");
-									System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+									//The call state is changed to 'Held' when you hold the call. 
 									
-									System.out.println("Retrieving...");
-									retrieveCall(voiceApi, callId);
+									if(hasCalledInitiateTransfer && callId.equals(parentConnId)) {
+										System.out.println("Held");
+										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+										actionsCompleted ++;
+									}
 									
-								}  else if(callState.equals("Released")) {
+								}
+								
+								if(callState.equals("Held") || callState.equals("Established")) {
+									if(actionsCompleted == 2) {
+										System.out.println("Transfer initiated");
+										System.out.println("Completing transfer...");
+										completeTransfer(voiceApi, callId, parentConnId);
+										hasCalledCompleteTransfer = true;
+									}
+								}
+								
+								if(callState.equals("Released")) {
 									//region Released
-									//The call state is changed to 'Released' when the call is ended. Now you can make the agent 'NotReady' and change their work mode to 'AfterCallWork'.
-									System.out.println("Released");
+									//The call state is changed to 'Released' when the call is ended.
+									if(hasCalledCompleteTransfer && (callId.equals(parentConnId) || callId.equals(consultConnId))) {
+										System.out.println("Released");
+										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+										actionsCompleted ++;
+									}
 									
-									System.out.println("Setting agent state to not ready...");
-									makeAgentNotReadyAfterCall(voiceApi);
-								}
-							
-							} else if(messageData.get("messageType").equals("DnStateChanged")) {
-								
-								Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
-								
-								if(!hasActivatedChannels && (dn.get("agentState").equals("Ready") || dn.get("agentState").equals("NotReady")) ) {
-									System.out.println("Channels activated");
-									//region Activating Channels Event
-									//The first DnStateChanged event that is either 'Ready' or 'NotReady' is assumed to be cause by the server activating channels.
-									System.out.println("Waiting for incoming calls...");
-									hasActivatedChannels = true;
+									if(actionsCompleted == 4) {
+										System.out.println("Transfer complete");
+										//region Finishing up
+										//Now that the server is done transferring calls you can disconnect CometD and logout.
+										System.out.println("Disconnecting and logging out...");
+										disconnectAndLogout(bayeuxClient, sessionApi);
+						
+										System.out.println("done");
+										System.exit(0);
+									}
 									
-								} else if(dn.get("agentState").equals("NotReady") && dn.get("agentWorkMode").equals("AfterCallWork")) {
-									System.out.println("Agent state set to not ready");
-									//region Finishing up
-									//Now that the call has been handled to program is done so you can disconnect CometD and logout.
-									System.out.println("Disconnecting and logging out...");
-									disconnectAndLogout(bayeuxClient, sessionApi);
-								
-									System.out.println("done");
-									System.exit(0);
 								}
+								
+								
+								
 							}
+							
 						}
 						
 					}, (ClientSessionChannel channel, Message message) -> {
+						
 						if(message.isSuccessful()) {
 							System.out.println("subscribed");
+							
 							System.out.println("Activating channels...");
 							activateChannels(sessionApi);
 						} else {
@@ -226,94 +287,81 @@ public class Main {
         }
     }
     
-     public static void activateChannels(SessionApi sessionApi) {
-    	try {
+    
+    
+	public static void activateChannels(SessionApi sessionApi) {
+		CurrentSession user = null;
+		
+		try {
 			//region Current user information
 			//Obtaining current user information such as the employee ID using the SessionApi.
-			CurrentSession user = sessionApi.getCurrentSession();
+			user = sessionApi.getCurrentSession();
+		} catch(ApiException ex) {
+			System.err.println("Cannot get current session");
+			System.err.println(ex);
+			System.exit(1);
+		}
+		
+		try {
 			//region Activate Channels
 			//Activating channels for the user using employee ID and agent login.
 			ActivatechannelsData data = new ActivatechannelsData();
-			data.setAgentId(user.getData().getUser().getEmployeeId());
+			data.setAgentId(user.getData().getUser().getAgentLogin());
 			data.setDn(user.getData().getUser().getAgentLogin());
 			ChannelsData channelsData = new ChannelsData();
 			channelsData.data(data);
 			ApiSuccessResponse response = sessionApi.activateChannels(channelsData);
 			if(response.getStatus().getCode() != 0) {
 				System.err.println("Cannot activate channels");
+				System.exit(1);
 			}
 		} catch(ApiException ex) {
 			System.err.println("Cannot activate channels");
 			System.err.println(ex);
 			System.exit(1);
 		}
-    }
+	}
     
-    public static void answerCall(VoiceApi voiceApi, String callId) {
-    	//region Answering Call
-    	//Answer call using voice api and call id.
+    public static void initiateTransfer(VoiceApi voiceApi, String callId, String destination) {
+    	//region Initiating Transfer
+    	//Initiate transfer to a destination number using the voice api.
     	try {
-			VoicereadyData answerData = new VoicereadyData();
-			voiceApi.answer(callId, new AnswerData().data(answerData));
+			VoicecallsidinitiatetransferData data = new VoicecallsidinitiatetransferData()
+				.destination(destination);
+			voiceApi.initiateTransfer(callId, new InitiateTransferData().data(data));
 		} catch(ApiException ex) {
-			System.err.println("Cannot answer call");
+			System.err.println("Cannot initiate transfer");
 			System.err.println(ex);
 			System.exit(1);
 		}
     }
     
-    public static void holdCall(VoiceApi voiceApi, String callId) {
-    	//region Holding Call
-    	//Hold call using voice api and call id.
+    public static void completeTransfer(VoiceApi voiceApi, String callId, String parentConnId) {
+    	//region Completing Transfer
+    	//Complete the transfer using the parent conn id and the voice api.
     	try {
-			VoicereadyData data = new VoicereadyData();
-			voiceApi.hold(callId, new HoldData().data(data));
+			VoicecallsidcompletetransferData data = new VoicecallsidcompletetransferData()
+				.parentConnId(parentConnId);
+			voiceApi.completeTransfer(callId, new CompleteTransferData().data(data));
 		} catch(ApiException ex) {
-			System.err.println("Cannot hold call");
+			System.err.println("Cannot complete transfer");
 			System.err.println(ex);
 			System.exit(1);
 		}
     }
     
-    public static void retrieveCall(VoiceApi voiceApi, String callId) {
-    	//region Retrieving Call
-    	//Retrieve call using voice api and call id.
-    	try {
-			VoicereadyData data = new VoicereadyData();
-			voiceApi.retrieve(callId, new RetrieveData().data(data));
+    public static List<Call> getCalls(VoiceApi voiceApi) {
+    	//region Getting Calls
+    	//Getting the current calls using the voice api.
+		try {
+			InlineResponse200 response = voiceApi.getCalls();
+			return response.getData().getCalls();
 		} catch(ApiException ex) {
-			System.err.println("Cannot retrieve call");
+			System.err.println("Cannot get calls");
 			System.err.println(ex);
 			System.exit(1);
 		}
-    }
-    
-    public static void releaseCall(VoiceApi voiceApi, String callId) {
-    	//region Release Call
-    	//End call using voice api and call id.
-    	try {
-			VoicereadyData data = new VoicereadyData();
-			voiceApi.release(callId, new ReleaseData().data(data));
-		} catch(ApiException ex) {
-			System.err.println("Cannot release call");
-			System.err.println(ex);
-			System.exit(1);
-		}
-    }
-    
-    public static void makeAgentNotReadyAfterCall(VoiceApi voiceApi) {
-    	//region Making Agent NotReady and Setting Agent Work Mode
-    	//Setting agent state to 'NotReady' using the voice api and specifying the agent's work mode using the agent work mode enum.
-    	try {
-			VoicenotreadyData data = new VoicenotreadyData()
-				.agentWorkMode(VoicenotreadyData.AgentWorkModeEnum.AFTERCALLWORK);
-		
-			voiceApi.setAgentStateNotReady(new NotReadyData().data(data));
-		} catch(ApiException ex) {
-			System.err.println("Cannot set state!");
-			System.err.println(ex);
-			System.exit(1);
-		}
+		return null;
     }
     
     public static void disconnectAndLogout(BayeuxClient bayeuxClient, SessionApi sessionApi) {
