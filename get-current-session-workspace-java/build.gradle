@@ -9,16 +9,10 @@ if (!hasProperty('mainClass')) {
 
 repositories {
     mavenCentral()
-	
-	flatDir {
-		dirs '../sdk/provisioning/java/target'
-		dirs '../sdk/workspace/java/target'
-		dirs '../sdk/authorization/java/target'
-	}
 }
 
 dependencies {
     testCompile 'junit:junit:4.10'
-	compile ':authorization-api:1.0.0'
-	compile ':workspace-api:1.0.0'
+    compile 'com.genesys:authorization:1.0.0'
+	compile 'com.genesys:workspace:1.0.0'
 }
