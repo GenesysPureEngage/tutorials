@@ -2,7 +2,7 @@ import com.genesys.common.ApiClient;
 import com.genesys.common.ApiResponse;
 import com.genesys.provisioning.api.LoginApi;
 import com.genesys.provisioning.api.UsersApi;
-import com.genesys.provisioning.model.AddUser;
+import com.genesys.provisioning.model.AddUserData;
 import com.genesys.provisioning.model.ApiSuccessResponse;
 import com.genesys.provisioning.model.Login;
 import com.genesys.provisioning.model.LoginSuccessResponse;
@@ -10,13 +10,17 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class Main {
+    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl>
     public static void main(String[] args) {
+        final String apiKey = args[0];
+        final String clientId = args[1];
+        final String clientSecret = args[2];
+        final String apiUrl = args[3];
 
+        final String provisionUrl = String.format("%s/provisioning/v3", apiUrl);
+        
         //region 1 Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-        final String apiKey = "<api key>";
-        final String provisionUrl = "https://<api url>/provisioning/v3";
-
         final ApiClient client = new ApiClient();
         client.setBasePath(provisionUrl);
         client.addDefaultHeader("x-api-key", apiKey);
@@ -31,8 +35,8 @@ public class Main {
             //region 3 Logging in Provisioning API
             //Logging in using our username and password
             Login loginData = new Login();
-            loginData.setDomainUsername("username");
-            loginData.setPassword("password");
+            loginData.setDomainUsername(clientId);
+            loginData.setPassword(clientSecret);
             ApiResponse<LoginSuccessResponse> loginResp = loginApi.loginWithHttpInfo(loginData);
             if (loginResp.getData().getStatus().getCode() != 0) {
                     throw new Exception("Cannot log in");
@@ -57,7 +61,7 @@ public class Main {
 
             //region 6 Describing and creating a user
             //Filling necessary information and creating a user using UsersApi instance
-            AddUser usersData = new AddUser();
+            AddUserData usersData = new AddUserData();
             usersData.setUserName("username");
             usersData.setPassword("password");
             usersData.setFirstName("FirstName");
