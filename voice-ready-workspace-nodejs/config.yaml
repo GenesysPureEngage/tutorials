@@ -1,4 +1,4 @@
-title: Activate Channels and change state to ready
+title: Activate Channels and change state to ready using the Workspace API
 description: This example shows how to log in, activate channels and change state using the Workspace API
 categories: 
   - workspace

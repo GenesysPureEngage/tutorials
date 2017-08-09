@@ -6,16 +6,17 @@ import com.genesys.provisioning.model.AddUser;
 import com.genesys.provisioning.model.ApiSuccessResponse;
 import com.genesys.provisioning.model.Login;
 import com.genesys.provisioning.model.LoginSuccessResponse;
+
 import java.util.Arrays;
 import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) {
 
-        //region 1 Initialize API Client
+        //region Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-        final String apiKey = "<api key>";
-        final String provisionUrl = "https://<api url>/provisioning/v3";
+        final String apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
+        final String provisionUrl = "https://gws-usw1.genhtcc.com/provisioning/v3";
 
         final ApiClient client = new ApiClient();
         client.setBasePath(provisionUrl);
@@ -23,39 +24,38 @@ public class Main {
         //endregion
 
         try {
-            //region 2 Create LoginApi instance
+            //region Create LoginApi instance
             //Creating instance of LoginApi using the ApiClient.
             final LoginApi loginApi = new LoginApi(client);
             //endregion
 
-            //region 3 Logging in Provisioning API
+            //region Logging in Provisioning API
             //Logging in using our username and password
             Login loginData = new Login();
             loginData.setDomainUsername("username");
             loginData.setPassword("password");
             ApiResponse<LoginSuccessResponse> loginResp = loginApi.loginWithHttpInfo(loginData);
             if (loginResp.getData().getStatus().getCode() != 0) {
-                    throw new Exception("Cannot log in");
+                throw new Exception("Cannot log in");
             }
             //endregion
 
-            //region 4 Obtaining Provisioning API Session
+            //region Obtaining Provisioning API Session
             //Obtaining sessionId and setting PROVISIONING_SESSIONID cookie to the client
-            Optional<String> session = loginResp.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("PROVISIONING_SESSIONID")).findFirst();
-            if (session.isPresent()) {
-                    client.addDefaultHeader("Cookie", session.get());
-            } 
-            else {
-                    throw new Exception("Session not found");
+            Optional<String> sessionCookie = loginResp.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("PROVISIONING_SESSIONID")).findFirst();
+            if (sessionCookie.isPresent()) {
+                client.addDefaultHeader("Cookie", session.get());
+            } else {
+                throw new Exception("Session not found");
             }
             //endregion
 
-            //region 5 Creating UsersApi instance
+            //region Creating UsersApi instance
             //Creating instance of UsersApi using the ApiClient
             final UsersApi usersApi = new UsersApi(client);
             //endregion
 
-            //region 6 Describing and creating a user
+            //region Describing and creating a user
             //Filling necessary information and creating a user using UsersApi instance
             AddUser usersData = new AddUser();
             usersData.setUserName("username");
@@ -72,7 +72,7 @@ public class Main {
             }
             //endregion
 
-            //region 7 Logging out
+            //region Logging out
             //Ending our Provisioning API session
             loginApi.logout();
             //endregion
@@ -82,3 +82,14 @@ public class Main {
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+

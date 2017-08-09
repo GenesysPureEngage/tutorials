@@ -1,14 +1,17 @@
 import com.genesys.common.ApiClient;
 import com.genesys.common.ApiResponse;
 import com.genesys.common.ApiException;
+
 import com.genesys.workspace.api.SessionApi;
 import com.genesys.workspace.api.VoiceApi;
 import com.genesys.workspace.model.ActivatechannelsData;
 import com.genesys.workspace.model.ApiSuccessResponse;
 import com.genesys.workspace.model.ChannelsData;
-
-import com.genesys.workspace.model.ReadyData;
-import com.genesys.workspace.model.VoicereadyData;
+import com.genesys.workspace.model.Call;
+import com.genesys.workspace.model.InitiateConferenceData;
+import com.genesys.workspace.model.VoicecallsidinitiateconferenceData;
+import com.genesys.workspace.model.CompleteConferenceData;
+import com.genesys.workspace.model.VoicecallsidcompletetransferData;
 
 import com.genesys.authorization.api.AuthenticationApi;
 import com.genesys.authorization.model.DefaultOAuth2AccessToken;
@@ -20,16 +23,19 @@ import org.cometd.client.transport.ClientTransport;
 import org.cometd.client.transport.LongPollingTransport;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Base64;
+
 import java.net.URI;
 import java.net.HttpCookie;
 import java.net.CookieManager;
-import java.util.Base64;
 
 public class Main {
     public static void main(String[] args) {
@@ -44,7 +50,8 @@ public class Main {
         
         final String username = "agent-6504772888";
         final String password = "Agent123";
-		
+        
+        final String consultAgentNumber = "6504772885";
 		
 		//region Initialize Workspace Client
         //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
@@ -82,10 +89,10 @@ public class Main {
             
             final ApiResponse<ApiSuccessResponse> response = sessionApi.initializeWorkspaceWithHttpInfo("", "", "Bearer " + accessToken.getAccessToken());
             
-            Optional<String> session = response.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("WORKSPACE_SESSIONID")).findFirst();
+            Optional<String> sessionCookie = response.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("WORKSPACE_SESSIONID")).findFirst();
             
-            if(session.isPresent()) {
-            	client.addDefaultHeader("Cookie", session.get());
+            if(sessionCookie.isPresent()) {
+            	client.addDefaultHeader("Cookie", sessionCookie.get());
             } else {
             	throw new Exception("Could not find session");
             }
@@ -99,11 +106,9 @@ public class Main {
 			final HttpClient httpClient = new HttpClient(sslContextFactory);
 			httpClient.start();
 			
-			
 			CookieManager manager = new CookieManager();
 			httpClient.setCookieStore(manager.getCookieStore());
-			httpClient.getCookieStore().add(new URI(workspaceUrl), new HttpCookie("WORKSPACE_SESSIONID", session.get().split(";")[0].split("=")[1]));
-			
+			httpClient.getCookieStore().add(new URI(workspaceUrl), new HttpCookie("WORKSPACE_SESSIONID", sessionCookie.get().split(";")[0].split("=")[1]));
 			
 			//region Creating BayeuxClient (CometD Client) and Making CometD handshake
 			//Here we configure CometD using long polling transport and making sure the api key is included in headers. The BayeuxClient instance is created and used to make the CometD handshake.
@@ -117,7 +122,7 @@ public class Main {
 			
 			
 			bayeuxClient.handshake((ClientSessionChannel handshakeChannel, Message handshakeMessage) -> {
-					
+				
 				if(handshakeMessage.isSuccessful()) {
 					//region Subscribing to Initialization Channel
 					//Once the handshake is successful we can subscribe to a CometD channels to get events. 
@@ -138,7 +143,6 @@ public class Main {
 								
 								String agentLogin = (String) user.get("agentLogin");
 								String employeeId = (String) user.get("employeeId");
-								
 								System.out.println("Activating channels...");
 								activateChannels(sessionApi, employeeId, agentLogin);
 							}
@@ -157,49 +161,129 @@ public class Main {
 					});
 					
 					//region Subscribing is Voice Channel
-					//Here we subscribe to voice channel to get call events.  	
+					//Here we subscribe to voice channel to get call events.
 					bayeuxClient.getChannel("/workspace/v3/voice").subscribe(new  ClientSessionChannel.MessageListener() {
 						
+						//region Setting up Message Listener
+						//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 						private boolean hasActivatedChannels = false;
+						private boolean hasCalledInitiateConference = false;
+						private boolean hasCalledCompleteConference = false;
+						
+						private int actionsCompleted = 0;
+						
+						private String consultConnId = null;
+						private String parentConnId = null;
+						//endregion
 						
 						@Override public void onMessage(ClientSessionChannel channel, Message message) {
-							//region Receiving Events
+							
+							//region Receiving Voice Events
 							//Here CometD events are handled. The Message object contains data that is stored as a map. Getting the 'messageType' will tell us the type of message.
 							Map<String, Object> messageData = (Map<String, Object>) message.getDataAsMap();
-						
+							
 							if(messageData.get("messageType").equals("DnStateChanged")) {
-							
-								Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
-							
-								//region Handle Different State changes
-								//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-								//Once the server is done changing the agent state to 'Ready' we will get another event.
-								if(!hasActivatedChannels) {
-									
-									if(dn.get("agentState").equals("NotReady")) {
-									
-										System.out.println("Channels activated");
-										System.out.println("Changing agent state...");
-									
-										makeAgentReady(voiceApi);
-										hasActivatedChannels = true;
-									}
-								} else {
-									
-									if(dn.get("agentState").equals("Ready")) {
-										System.out.println("Agent state changed to Ready");
-										//region Finishing up
-										//Now that the agent state is changed to 'Ready' to program is done so we can disconnect CometD and logout.
-										disconnectAndLogout(bayeuxClient, sessionApi);
 								
+								Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
+								
+								//region Activating Channels Event
+								//The first DnStateChanged event that is either 'Ready' or 'NotReady' is assumed to be cause by the server activating channels.
+								if(!hasActivatedChannels && (dn.get("agentState").equals("Ready") || dn.get("agentState").equals("NotReady")) ) {
+									System.out.println("Channels activated");
+									hasActivatedChannels = true;
+									System.out.println("Looking for established calls...");
+								}
+								//endregion
+								
+							} else if(messageData.get("messageType").equals("CallStateChanged")) {
+								//region Get Call Info
+								//The call id and state are stored in a map with the key 'call' in message data.
+								Map<String, Object> call = (Map<String, Object>) messageData.get("call");
+								String callId = call.get("id").toString();
+								String callState = call.get("state").toString();
+								String capabilities = Arrays.asList((Object[]) call.get("capabilities")).toString();
+								
+								if(callState.equals("Dialing")) {
+									//region Dialing
+									//After the conference is initiated, we will get a dialing event for the new call
+									System.out.println("Dialing");
+									System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+									
+									if(hasCalledInitiateConference) {
+										consultConnId = callId;
+									}
+									//endregion
+									
+								} if(callState.equals("Established")) {
+									//region Established
+									//When the call state is 'Established' this means that the call is in progress.
+									//Here we check if this event if from answering the consult call.
+									if(hasActivatedChannels && parentConnId == null) {
+										System.out.println("Found established call: " + callId);
+										System.out.println("Initiating conference...");
+										parentConnId = callId;
+										initiateConference(voiceApi, callId, consultAgentNumber);
+										hasCalledInitiateConference = true;
+									}
+									
+									if(hasCalledInitiateConference && callId.equals(consultConnId)) {
+										System.out.println("Answered");
+										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+										actionsCompleted ++;
+									}
+									//endregion
+									
+								} else if(callState.equals("Held")) {
+									//region Held
+									//The call state is changed to 'Held' when we hold the call. 
+									
+									if(hasCalledInitiateConference && callId.equals(parentConnId)) {
+										System.out.println("Held");
+										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+										actionsCompleted ++;
+									}
+									//endregion
+								}
+								
+								if(callState.equals("Held") || callState.equals("Established")) {
+									if(actionsCompleted == 2) {
+										System.out.println("Conference initiated");
+										System.out.println("Completing conference...");
+										completeConference(voiceApi, callId, parentConnId);
+										hasCalledCompleteConference = true;
+									}
+								}
+								
+								if(callState.equals("Released")) {
+									//region Released
+									//The call state is changed to 'Released' when the call is ended.
+									if(hasCalledCompleteConference && callId.equals(consultConnId)) {
+										System.out.println("Released");
+										System.out.println("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+										actionsCompleted ++;
+									}
+									//endregion
+									
+									if(actionsCompleted == 3) {
+										System.out.println("Conference complete");
+										//region Finishing up
+										//Now that the server is done transferring calls we can disconnect CometD and logout.
+										System.out.println("Disconnecting and logging out...");
+										disconnectAndLogout(bayeuxClient, sessionApi);
+						
 										System.out.println("done");
 										System.exit(0);
 										//endregion
 									}
+									
 								}
+								
+								
+								
 							}
-						
+							
 						}
+						
 					}, (ClientSessionChannel channel, Message message) -> {
 						//region Subscription Event
 						//If the CometD subscription is unsuccessful we end the program.
@@ -211,13 +295,12 @@ public class Main {
 						}
 						//endregion
 					});
-					
-					
 				} else {
 					System.err.println("Handshake failed");
 				}
 			});
-            
+			
+			
             
         } catch(Exception ex) {
             System.err.println(ex);
@@ -225,7 +308,8 @@ public class Main {
         }
     }
     
-    public static void activateChannels(SessionApi sessionApi, String employeeId, String agentLogin) {
+	
+	public static void activateChannels(SessionApi sessionApi, String employeeId, String agentLogin) {
 		
 		//region Activate Channels
 		//Activating channels for the user using employee ID and agent login.
@@ -250,20 +334,48 @@ public class Main {
 		//endregion
 	}
     
-    public static void makeAgentReady(VoiceApi voiceApi) {
-		//region Change agent state
-		//Changing agent state to ready
-		try {
-			VoicereadyData data = new VoicereadyData();
-			ApiSuccessResponse response = voiceApi.setAgentStateReady(new ReadyData().data(data));
-			if(response.getStatus().getCode() != 0) {
-				System.err.println("Cannot change agent state");
-			}
+    public static void initiateConference(VoiceApi voiceApi, String callId, String destination) {
+    	//region Initiating Conference
+    	//Initiate transfer to a destination number using the voice api.
+    	try {
+			VoicecallsidinitiateconferenceData data = new VoicecallsidinitiateconferenceData()
+				.destination(destination);
+			voiceApi.initiateConference(callId, new InitiateConferenceData().data(data));
 		} catch(ApiException ex) {
-			System.err.println("Cannot make agent ready");
+			System.err.println("Cannot initiate conference");
 			System.err.println(ex);
 			System.exit(1);
 		}
+		//endregion
+    }
+    
+    public static void completeConference(VoiceApi voiceApi, String callId, String parentConnId) {
+    	//region Completing Conference
+    	//Complete the conference using the parent call id and the voice api.
+    	try {
+			VoicecallsidcompletetransferData data = new VoicecallsidcompletetransferData()
+				.parentConnId(parentConnId);
+			voiceApi.completeConference(callId, new CompleteConferenceData().data(data));
+		} catch(ApiException ex) {
+			System.err.println("Cannot complete conference");
+			System.err.println(ex);
+			System.exit(1);
+		}
+		//endregion
+    }
+    
+    public static List<Call> getCalls(VoiceApi voiceApi) {
+    	//region Getting Calls
+    	//Getting the current calls using the voice api.
+		try {
+			InlineResponse200 response = voiceApi.getCalls();
+			return response.getData().getCalls();
+		} catch(ApiException ex) {
+			System.err.println("Cannot get calls");
+			System.err.println(ex);
+			System.exit(1);
+		}
+		return null;
 		//endregion
     }
     
@@ -281,8 +393,8 @@ public class Main {
 		}
 		//endregion
     }
+    
 }
-
 
 
 

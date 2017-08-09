@@ -3,9 +3,14 @@ import com.genesys.common.ApiResponse;
 import com.genesys.common.ApiException;
 import com.genesys.workspace.api.SessionApi;
 import com.genesys.workspace.api.VoiceApi;
+import com.genesys.workspace.api.TargetsApi;
 import com.genesys.workspace.model.ActivatechannelsData;
 import com.genesys.workspace.model.ApiSuccessResponse;
 import com.genesys.workspace.model.ChannelsData;
+import com.genesys.workspace.model.TargetsResponse;
+import com.genesys.workspace.model.Target;
+import com.genesys.workspace.model.VoicemakecallData;
+import com.genesys.workspace.model.MakeCallData;
 
 import com.genesys.workspace.model.ReadyData;
 import com.genesys.workspace.model.VoicereadyData;
@@ -26,10 +31,14 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.Base64;
+import java.math.BigDecimal;
+
 import java.net.URI;
 import java.net.HttpCookie;
 import java.net.CookieManager;
-import java.util.Base64;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -59,12 +68,14 @@ public class Main {
         authClient.addDefaultHeader("x-api-key", apiKey);
         //endregion
         
+        
         try {
         	
             //region Create SessionApi and VoiceApi instances
             //Creating instances of SessionApi and VoiceApi using the workspace ApiClient which will be used to make api calls.
             final SessionApi sessionApi = new SessionApi(client);
             final VoiceApi voiceApi = new VoiceApi(client);
+            final TargetsApi targetsApi = new TargetsApi(client);
             
             //region Create AuthenticationApi instance
             //Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
@@ -121,7 +132,7 @@ public class Main {
 				if(handshakeMessage.isSuccessful()) {
 					//region Subscribing to Initialization Channel
 					//Once the handshake is successful we can subscribe to a CometD channels to get events. 
-					//Here we subscribe to initialization channel to get 'initializationComplete' event.
+					//Here we subscribe to initialization channel to get 'WorkspaceInitializationComplete' event.
 					bayeuxClient.getChannel("/workspace/v3/initialization").subscribe(new  ClientSessionChannel.MessageListener() {
 						
 						@Override public void onMessage(ClientSessionChannel channel, Message message) {
@@ -160,7 +171,7 @@ public class Main {
 					//Here we subscribe to voice channel to get call events.  	
 					bayeuxClient.getChannel("/workspace/v3/voice").subscribe(new  ClientSessionChannel.MessageListener() {
 						
-						private boolean hasActivatedChannels = false;
+						private boolean hasActivatedChannels = false; 
 						
 						@Override public void onMessage(ClientSessionChannel channel, Message message) {
 							//region Receiving Events
@@ -175,27 +186,28 @@ public class Main {
 								//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
 								//Once the server is done changing the agent state to 'Ready' we will get another event.
 								if(!hasActivatedChannels) {
-									
-									if(dn.get("agentState").equals("NotReady")) {
-									
-										System.out.println("Channels activated");
-										System.out.println("Changing agent state...");
-									
-										makeAgentReady(voiceApi);
-										hasActivatedChannels = true;
-									}
-								} else {
-									
-									if(dn.get("agentState").equals("Ready")) {
-										System.out.println("Agent state changed to Ready");
+									hasActivatedChannels = true;
+									System.out.println("Getting targets...");
+									List<Target> targets = getTargets(targetsApi, "agent-1");
+									if(targets.size() == 0) {
+										System.err.println("Search came up empty");
+										System.exit(1);
+									} else {
+										System.out.println("Found targets: " + targets);
+										System.out.println("Calling target: " + targets.get(0));
+										
+										makeCall(voiceApi, targets.get(0).getNumber());
+										
 										//region Finishing up
-										//Now that the agent state is changed to 'Ready' to program is done so we can disconnect CometD and logout.
+										//Now that we have made a call to a target we can disconnect ant logout.
+										System.out.println("Disconnecting and logging out...");
 										disconnectAndLogout(bayeuxClient, sessionApi);
-								
+						
 										System.out.println("done");
 										System.exit(0);
-										//endregion
 									}
+									
+									
 								}
 							}
 						
@@ -249,18 +261,35 @@ public class Main {
 		}
 		//endregion
 	}
-    
-    public static void makeAgentReady(VoiceApi voiceApi) {
-		//region Change agent state
-		//Changing agent state to ready
+	
+	public static List<Target> getTargets(TargetsApi targetsApi, String searchTerm) {
+		//region Get Targets
+		//Getting target agents that match the specified search term using the targets api.
 		try {
-			VoicereadyData data = new VoicereadyData();
-			ApiSuccessResponse response = voiceApi.setAgentStateReady(new ReadyData().data(data));
+			
+			TargetsResponse response = targetsApi.get(searchTerm, "", "", "asc", BigDecimal.valueOf(10), "exact");
 			if(response.getStatus().getCode() != 0) {
-				System.err.println("Cannot change agent state");
+				System.err.println("Cannot get targets");
 			}
+			return response.getData().getTargets();
+			
 		} catch(ApiException ex) {
-			System.err.println("Cannot make agent ready");
+			System.err.println("Cannot get targets");
+			System.err.println(ex);
+			System.exit(1);
+		}
+		//endregion
+		return null;
+    }
+    
+    public static void makeCall(VoiceApi voiceApi, String destination) {
+    	//region Making a Call
+		//Using the voice api to make a call to the specified destination.
+		try {
+			VoicemakecallData data = new VoicemakecallData().destination(destination);
+			voiceApi.makeCall(new MakeCallData().data(data));
+		} catch(ApiException ex) {
+			System.err.println("Cannot make call");
 			System.err.println(ex);
 			System.exit(1);
 		}
@@ -281,6 +310,8 @@ public class Main {
 		}
 		//endregion
     }
+    
+    
 }
 
 
