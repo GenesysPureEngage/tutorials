@@ -13,7 +13,5 @@
     "genesys-authorization-client-js": "1.0.29",
     "genesys-workspace-client-js": "1.0.68"
   },
-  "main": "src/main.js", "scripts":{
-"start":"node src\/main.js qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1 voice_2157_admin voice_2157_admin https:\/\/api-usw1.genhtcc.com LT_A_4444998 LT_A_4444998"}
-
+  "main": "src/main.js"
 }
