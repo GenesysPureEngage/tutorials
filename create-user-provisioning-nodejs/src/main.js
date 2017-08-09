@@ -1,12 +1,18 @@
 const provisioning = require('genesys-provisioning-client-js');
 
+//Usage: <apiKey> <clientId> <clietnSecret> <apiUrl>
+const argv = process.argv.slice(2);
+const apiKey = argv[0];
+const clientId = argv[1];
+const clientSecret = argv[2];
+const apiUrl = argv[3];
+
+const provisioningUrl = `${apiUrl}/provisioning/v3`;
+
 //region Initialize API Client
 //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-const apiKey = "key";
-const provisioningrl = "url";
-
 const provisioningClient = new provisioning.ApiClient();
-provisioningClient.basePath = provisioningrl;
+provisioningClient.basePath = provisioningUrl;
 provisioningClient.defaultHeaders = { 'x-api-key': apiKey };
 
 //region Create SessionApi instance
@@ -16,8 +22,8 @@ const sessionApi = new provisioning.SessionApi(provisioningClient);
 //region Logging in Provisioning API
 //Logging in using our username and password
 sessionApi.login({
-  "domain_username": "username",
-  "password": "password"
+  domain_username: clientId,
+  password: clientSecret
 }, (err, data, resp) => {
 	const body = resp? resp.body: {};
 	if(err || (body.status && body.status.code !== 0)) {
@@ -39,15 +45,17 @@ sessionApi.login({
                     userName: "userName",
                     firstName: "firstName",
                     lastName: "lastName",
-                    password: "password",
-                    accessGroup: [ "accessGroup" ]
+                    password: "Password1",
+                    agentGroup: ['tutorials'],
+                    accessGroup: [ "Users" ]
             }, (err, data, resp) => {
                     const body = resp? resp.body: {};
                     if(err || (body.status && body.status.code !== 0)) {
-                            console.error("Cannot create user");
+                        console.error("Cannot create user");
+                        console.error(body);
                     }
                     else {
-                            console.log('User created!');
+                        console.log('User created!');
                     }
             });
 
