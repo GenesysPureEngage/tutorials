@@ -13,5 +13,5 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.10'
-	compile 'com.genesys:provisioning:1.0.0'
+	compile 'com.genesys:provisioning:1.0.1'
 }
