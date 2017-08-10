@@ -10,8 +10,8 @@
   ],
   "contributors": [],
   "dependencies": {
-    "genesys-authorization-client-js": "1.0.29",
-    "genesys-workspace-client-js": "1.0.68"
+    "genesys-authorization-client-js": "1.0.35",
+    "genesys-workspace-client-js": "1.0.74"
   },
   "main": "src/main.js"
 }
