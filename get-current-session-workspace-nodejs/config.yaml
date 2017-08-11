@@ -1,0 +1,5 @@
+title: Get current user using Workspace API
+description: This example shows how to log in and get a current user information using the Workspace API
+categories: 
+  - workspace
+displayName: Node.Js

@@ -3,24 +3,3 @@ description: This example shows how to log in, activate channels and change stat
 categories: 
   - workspace
 displayName: Node.Js
-steps:
-  - file: "src/main.js"
-    highlight: "0-63"
-  - file: "src/main.js"
-    highlight: "3-8"
-  - file: "src/main.js"
-    highlight: "10-10"
-  - file: "src/main.js"
-    highlight: "11-19"
-  - file: "src/main.js"
-    highlight: "20-22"
-  - file: "src/main.js"
-    highlight: "23-31"
-  - file: "src/main.js"
-    highlight: "32-43"
-  - file: "src/main.js"
-    highlight: "44-44"
-  - file: "src/main.js"
-    highlight: "45-52"
-  - file: "src/main.js"
-    highlight: "54-54"

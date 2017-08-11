@@ -4,87 +4,95 @@ const url = require('url');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
-//region Initialize API Client
-//Create and setup ApiClient instance with your ApiKey and Workspace API URL.
-const apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
-const workspaceUrl = "https://api-usw1.genhtcc.com/workspace/v3";
-const authUrl = "https://gws-usw1.genhtcc.com/auth/v3";
+//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
+const argv = process.argv.slice(2);
+const apiKey = argv[0];
+const clientId = argv[1];
+const clientSecret = argv[2];
+const apiUrl = argv[3];
+const username = argv[4];
+const password = argv[5];
 
-const clientId = "external_api_client";
-const clientSecret = "secret";
+const workspaceUrl = `${apiUrl}/workspace/v3`;
+const authUrl = `${apiUrl}`;
 
-const username = "agent-6504772888";
-const password = "Agent123";
+function main() {
+	//region Initialize API Client
+	//Create and setup ApiClient instance with your ApiKey and Workspace API URL.
+	const workspaceClient = new workspace.ApiClient();
+	workspaceClient.basePath = workspaceUrl;
+	workspaceClient.defaultHeaders = { 'x-api-key': apiKey };
 
-const workspaceClient = new workspace.ApiClient();
-workspaceClient.basePath = workspaceUrl;
-workspaceClient.defaultHeaders = { 'x-api-key': apiKey };
+	const authClient = new auth.ApiClient();
+	authClient.basePath = authUrl;
+	authClient.defaultHeaders = { 'x-api-key': apiKey };
 
-const authClient = new auth.ApiClient();
-authClient.basePath = authUrl;
-authClient.defaultHeaders = { 'x-api-key': apiKey };
+	//region Create SessionApi instance
+	//Creating instance of SessionApi using the ApiClient.
+	const sessionApi = new workspace.SessionApi(workspaceClient);
 
-//region Create SessionApi instance
-//Creating instance of SessionApi using the ApiClient.
-const sessionApi = new workspace.SessionApi(workspaceClient);
-
-//region Create AuthenticationApi instance
-//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
-const authApi = new auth.AuthenticationApi(authClient); 
+	//region Create AuthenticationApi instance
+	//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
+	const authApi = new auth.AuthenticationApi(authClient); 
 
 
-//region Oauth2 Authentication
-//Performing Oauth 2.0 authentication.
-console.log("Retrieving access token...");
+	//region Oauth2 Authentication
+	//Performing Oauth 2.0 authentication.
+	console.log("Retrieving access token...");
 
-const authorization = "Basic " + new String(new Buffer(clientId + ":" + clientSecret).toString("base64"));
-authApi.retrieveToken("password", clientId, username, password, {"authorization": authorization}).then((accessToken) => {
-	
-	if(!accessToken["access_token"]) {
-		console.error("No access token");
+	const authorization = "Basic " + new String(new Buffer(clientId + ":" + clientSecret).toString("base64"));
+	authApi.retrieveToken("password", "openid", {
+		clientId: clientId,
+		username: username,
+		password: password,
+		authorization: authorization
+	}).then((resp) => {	
+		if(!resp["access_token"]) {
+			console.error("No access token");
 		
-	} else {
+		} else {
 		
-		console.log("Retrieved access token");
-		console.log("Initializing workspace...");
+			console.log("Retrieved access token");
+			console.log("Initializing workspace...");
 	
-		sessionApi.initializeWorkspaceWithHttpInfo({"authorization": "Bearer " + accessToken["access_token"]}).then((resp) => {
-			//region Getting Session ID
-			//If the initialize-workspace call is successful, the it will return the workspace session ID as a cookie.
-			//We still must wait for 'InitializeWorkspaceComplete' cometD event in order to get user data for the user we are loggin in.
-			if(resp.data.status.code == 1) {
-				const sessionCookie = resp.response.header["set-cookie"].find(v => v.startsWith("WORKSPACE_SESSIONID"));
-				workspaceClient.defaultHeaders["Cookie"] = sessionCookie;
-				console.log("Got workspace session id");
+			sessionApi.initializeWorkspaceWithHttpInfo({"authorization": "Bearer " + resp["access_token"]}).then((resp) => {
+				//region Getting Session ID
+				//If the initialize-workspace call is successful, the it will return the workspace session ID as a cookie.
+				//We still must wait for 'InitializeWorkspaceComplete' cometD event in order to get user data for the user we are loggin in.
+				if(resp.data.status.code == 1) {
+					const sessionCookie = resp.response.header["set-cookie"].find(v => v.startsWith("WORKSPACE_SESSIONID"));
+					workspaceClient.defaultHeaders["Cookie"] = sessionCookie;
+					console.log("Got workspace session id");
 				
-				//region CometD
-				//Now that we have our workspace session ID we can start cometD and get initialization event.
-				startCometD(workspaceUrl, apiKey, sessionCookie, (cometD) => {
+					//region CometD
+					//Now that we have our workspace session ID we can start cometD and get initialization event.
+					startCometD(workspaceUrl, apiKey, sessionCookie, (cometD) => {
 					
-					waitForInitializeWorkspaceComplete(cometD, (user) => {
+						waitForInitializeWorkspaceComplete(cometD, (user) => {
 						
-						console.log("User: " + JSON.stringify(user));
-						disconnectAndLogout(cometD, sessionApi);
+							console.log("User: " + JSON.stringify(user));
+							disconnectAndLogout(cometD, sessionApi);
 						
+						});
 					});
-				});
-				//endregion
+					//endregion
 				
-			} else {
-				console.error("Error initializing workspace");
-				console.error("Code: " + resp.data.status.code);
-			}
+				} else {
+					console.error("Error initializing workspace");
+					console.error("Code: " + resp.data.status.code);
+				}
 			
-		}).catch((err) => {
-			console.error("Cannot initialize workspace");
-			console.error(err);
-		});
-	}
+			}).catch((err) => {
+				console.error("Cannot initialize workspace");
+				console.error(err);
+			});
+		}
 	
-}).catch((err) => {
-	console.error("Cannot get access token");
-	console.error(err);
-});
+	}).catch((err) => {
+		console.error("Cannot get access token");
+		console.error(err);
+	});
+}
 
 function startCometD(workspaceUrl, apiKey, sessionCookie, callback) {
 	//region Setting up CometD
@@ -165,3 +173,5 @@ function disconnectAndLogout(cometD, sessionApi) {
 	
 	//endregion
 }
+
+main();

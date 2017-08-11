@@ -1,12 +1,16 @@
 const provisioning = require('genesys-provisioning-client-js');
 
+//Usage: <apiKey> <username> <password> <apiUrl>
+const argv = process.argv.slice(2);
+const apiKey = argv[0];
+const username = argv[1];
+const password = argv[2];
+const apiUrl = argv[3];
+
+const provisioningUrl = `${apiUrl}/provisioning/v3`;
+
 //region Initialize API Client
 //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-const apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
-const provisioningUrl = "https://api-usw1.genhtcc.com/provisioning/v3";
-const username = "voice_2157_admin";
-const password = "voice_2157_admin";
-
 const provisioningClient = new provisioning.ApiClient();
 provisioningClient.basePath = provisioningUrl;
 provisioningClient.defaultHeaders = { 'x-api-key': apiKey };
@@ -45,7 +49,7 @@ sessionApi.login({
 			firstName: "agent",
 			lastName: "agent",
 			password: "Agent123",
-			accessGroup: [ "accessGroup" ]
+			accessGroup: [ "tutorials" ]
 		};
 		
 		console.log("Creating user: " + JSON.stringify(user) + "...");
@@ -67,7 +71,7 @@ sessionApi.login({
 		//Ending our Provisioning API session
 		sessionApi.logout().catch((err) => {
 			console.error("Cannot log out");
-			console.error(err);
+			if(err.response) console.error(err.response.text);
 		});
 	}
 }).catch((err) => {

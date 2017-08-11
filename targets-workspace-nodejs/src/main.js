@@ -4,7 +4,7 @@ const url = require('url');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
-//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
+//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword> <searchTerm>
 const argv = process.argv.slice(2);
 const apiKey = argv[0];
 const clientId = argv[1];
@@ -12,6 +12,7 @@ const clientSecret = argv[2];
 const apiUrl = argv[3];
 const username = argv[4];
 const password = argv[5];
+const searchTerm = argv[6];
 
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
@@ -31,6 +32,7 @@ function main() {
 	//Creating instances of SessionApi and VoiceApi using the ApiClient.
 	const sessionApi = new workspace.SessionApi(workspaceClient);
 	const voiceApi = new workspace.VoiceApi(workspaceClient);
+	const targetsApi = new workspace.TargetsApi(workspaceClient);
 
 	//region Create AuthenticationApi instance
 	//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
@@ -47,8 +49,7 @@ function main() {
 		username: username,
 		password: password,
 		authorization: authorization
-	}).then((resp) => {
-		
+	}).then((resp) => {		
 		if(!resp["access_token"]) {
 			console.error("No access token");
 		
@@ -72,7 +73,7 @@ function main() {
 						
 						waitForInitializeWorkspaceComplete(cometD, (user) => {
 							
-							startHandlingVoiceEvents(cometD, sessionApi, voiceApi, () => {
+							startHandlingVoiceEvents(cometD, sessionApi, voiceApi, targetsApi, () => {
 								
 								console.log("Activating channels...");
 								sessionApi.activateChannels({
@@ -84,7 +85,7 @@ function main() {
 									
 								}).catch((err) => {
 									console.error("Cannot activate channels");
-									console.error(err.response.text);
+									if(err.response.text) console.error(err.response.text);
 									process.exit(1);
 								});
 							});
@@ -100,13 +101,13 @@ function main() {
 			
 			}).catch((err) => {
 				console.error("Cannot initialize workspace");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 			});
 		}
 	
 	}).catch((err) => {
 		console.error("Cannot get access token");
-		console.error(err.response.text);
+		if(err.response.text) console.error(err.response.text);
 	});
 }
 
@@ -162,7 +163,7 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 			console.log("Initialization subscription succesful");
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			process.exit(1);
 		}
 	
@@ -170,49 +171,74 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 		
 }
 
-function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
+function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, targetsApi, callback) {
 	console.log("Subscribing to Voice channel...");
 	
 	//region Handling Voice Events
 	//Here we subscribe to voice channel and handle voice events.
+	//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 	var hasActivatedChannels = false;
+	var hasCalledInitiateTransfer = false;
+	var hasCalledCompleteTransfer = false;
+	
+	var actionsCompleted = 0;
+	
+	var consultConnId = null;
+	var parentConnId = null;
 	
 	cometD.subscribe("/workspace/v3/voice", (message) => {
 		
-		if(message.data.messageType = "DnStateChanged") {
+		if(message.data.messageType == "DnStateChanged") {
+			//region Handle Different State changes
+			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
+			//Once the server is done changing the agent state to 'Ready' we will get another event.
+			
+			const agentState = message.data.dn.agentState;
 			
 			if(!hasActivatedChannels) {
-				if(message.data.dn.agentState == "NotReady" ) {
+				if(agentState == "NotReady" || agentState == "Ready") {
 					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
+					hasActivatedChannels = true;
 					
-					voiceApi.setAgentStateReady().then((resp) => {
-						if(resp.data.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.data.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
+					console.log("Getting targets...");
+					
+					getTargets(targetsApi, searchTerm, (targets) => {
+						//region Calling Target
+						//Here we print the first10 targets returned from the search and call the first one if it exists.
+						if(targets.length == 0) {
+							console.error("Search came up empty");
+							disconnectAndLogout(cometD, sessionApi);
 						
-					}).catch((err) => {
-						console.error("Cannot set agent state to 'Ready'");
-						console.error(JSON.stringify(err));
-						console.error(err.response.text);
+						} else {
+							
+							console.log("Found targets: " + JSON.stringify(targets));
+							console.log("Calling target: " + targets[0].userName);
+							try {
+								const phoneNumber = targets[0]["availability"]["channels"][0]["phoneNumber"];
+								console.log("Phone number: " + phoneNumber);
+								makeCall(voiceApi, phoneNumber, () => {
+									//region Finishing up
+									//Now that we have made a call to a target we can disconnect ant logout.
+									console.log("done");
+									disconnectAndLogout(cometD, sessionApi);
+									//endregion
+								}, () => {
+									disconnectAndLogout(cometD, sessionApi);
+								});
+							} catch(e) {
+								console.error("No phone number");
+								disconnectAndLogout(cometD, sessionApi);
+							}
+						
+							
+						}
+					}, () => {
 						disconnectAndLogout(cometD, sessionApi);
 					});
-					
-					hasActivatedChannels = true;
-				} else if(message.data.dn.agentState == "Ready" ) {
-					console.log("Agent state is 'Ready'");
-					console.log("done");
-					disconnectAndLogout(cometD, sessionApi);
 					
 				}
 			}
 		}
-		
 		
 	}, (reply) => {
 		if(reply.successful) {
@@ -220,11 +246,55 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
 			callback();
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			disconnectAndLogout(cometD, sessionApi);
 		}
 	
 	});
+}
+
+function getTargets(targetsApi, searchTerm, callback, errorCallback) {
+	
+	//region Get Targets
+	//Getting target agents that match the specified search term using the targets api.
+	targetsApi.get(searchTerm, {
+		limit: 10
+	}).then((resp) => {
+		
+		if(resp.status.code != 0) {
+			console.error("Cannot get targets");
+			errorCallback();
+		} else {
+			callback(resp.data.targets);
+		}
+	}).catch((err) => {
+		console.error("Cannot get targets");
+		if(err.response) console.error(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function makeCall(voiceApi, destination, callback, errorCallback) {
+	//region Making a Call
+	//Using the voice api to make a call to the specified destination.
+	voiceApi.makeCall({
+		data: {
+			destination: destination
+		}
+	}).then((resp) => {
+		if(resp.status.code != 1) {
+			console.error("Cannot make call");
+			errorCallback();
+		} else {
+			callback();
+		}
+	}).catch((err) => {
+		console.error("Cannot make call");
+		if(err.response) console.error(err.response.text);
+		errorCallback();
+	});
+	//endregion
 }
 
 function disconnectAndLogout(cometD, sessionApi) {
@@ -236,7 +306,7 @@ function disconnectAndLogout(cometD, sessionApi) {
 				
 			}).catch((err) => {
 				console.error("Cannot log out");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 				process.exit(1);
 			});
 		} else {
@@ -247,9 +317,6 @@ function disconnectAndLogout(cometD, sessionApi) {
 	//endregion
 }
 
-function printError(err) {
-	if(err.response.text) console.log(err.response.text);
-}
 
 
 main();

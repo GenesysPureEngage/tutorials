@@ -47,8 +47,7 @@ function main() {
 		username: username,
 		password: password,
 		authorization: authorization
-	}).then((resp) => {
-		
+	}).then((resp) => {		
 		if(!resp["access_token"]) {
 			console.error("No access token");
 		
@@ -84,7 +83,7 @@ function main() {
 									
 								}).catch((err) => {
 									console.error("Cannot activate channels");
-									console.error(err.response.text);
+									if(err.response.text) console.error(err.response.text);
 									process.exit(1);
 								});
 							});
@@ -100,7 +99,7 @@ function main() {
 			
 			}).catch((err) => {
 				console.error("Cannot initialize workspace");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 			});
 		}
 	
@@ -162,7 +161,7 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 			console.log("Initialization subscription succesful");
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			process.exit(1);
 		}
 	
@@ -176,40 +175,89 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
 	//region Handling Voice Events
 	//Here we subscribe to voice channel and handle voice events.
 	var hasActivatedChannels = false;
+	var hasHeld = false;
 	
 	cometD.subscribe("/workspace/v3/voice", (message) => {
-		
-		if(message.data.messageType = "DnStateChanged") {
+		 
+		 if(message.data.messageType == "CallStateChanged") {
+			const callState = message.data.call.state;
+			const callId = message.data.call.id;
+			const capabilities = message.data.call.capabilities;
 			
-			if(!hasActivatedChannels) {
-				if(message.data.dn.agentState == "NotReady" ) {
-					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
+			if(callState == "Ringing") {
+				//region Ringing
+				//If the call state is changed to 'Ringing' this means there is an incoming call and we can answer it.
+				console.log("Received call");
+				console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+				
+				console.log("Answering...");
+				answerCall(voiceApi, callId, () => {
+					disconnectAndLogout(cometD, sessionApi);
+				});
+				//endregion
+			} else if(callState == "Established") {
+				//region Established
+				//When the call state is 'Established' this means that the call is in progress. The state is set to 'Established' both when the call is first answered and when the call is retrieved after holding so we must specify which scenario is taking place by setting the 'hasHeld' variable to true after the call has been held.
+				if(!hasHeld) {
+					console.log("Answered");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
 					
-					voiceApi.setAgentStateReady().then((resp) => {
-						if(resp.data.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.data.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-						
-					}).catch((err) => {
-						console.error("Cannot set agent state to 'Ready'");
-						console.error(JSON.stringify(err));
-						console.error(err.response.text);
+					console.log("Holding...");
+					holdCall(voiceApi, callId, () => {
 						disconnectAndLogout(cometD, sessionApi);
 					});
+					hasHeld = true;
+				} else {
+					console.log("Retrieved");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					
+					console.log("Releasing...");
+					releaseCall(voiceApi, callId, () => {
+						disconnectAndLogout(cometD, sessionApi);
+					});
+				}
+				//endregion
+				
+			} else if(callState == "Held") {
+				//region Held
+				//The call state is changed to 'Held' when we hold the call. Now we can retrieve the call when we're ready.
+				console.log("Held");
+				console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+				
+				console.log("Retrieving...");
+				retrieveCall(voiceApi, callId, () => {
+					disconnectAndLogout(cometD, sessionApi);
+				});
+				//endregion
+				
+			}  else if(callState == "Released") {
+				//region Released
+				//The call state is changed to 'Released' when the call is ended. Now we can make the agent 'NotReady' and change their work mode to 'AfterCallWork'.
+				console.log("Released");
+				
+				console.log("Setting agent state to not ready...");
+				makeAgentNotReadyAfterCall(voiceApi, () => {
+					disconnectAndLogout(cometD, sessionApi);
+				});
+				//endregion
+			}
+		} else if(message.data.messageType == "DnStateChanged") {
+			
+			if(!hasActivatedChannels) {
+				if(message.data.dn.agentState == "NotReady" || message.data.dn.agentState == "Ready") {
+					console.log("Channels activated");
+					console.log("Waiting for incoming calls...");
 					
 					hasActivatedChannels = true;
-				} else if(message.data.dn.agentState == "Ready" ) {
-					console.log("Agent state is 'Ready'");
-					console.log("done");
-					disconnectAndLogout(cometD, sessionApi);
-					
 				}
+			} else if(message.data.dn.agentState == "NotReady" && message.data.dn.agentWorkMode == "AfterCallWork") {
+				console.log("Agent state set to 'NotReady'");
+				//region Finishing up
+				//Now that the call has been handled to program is done so you can disconnect CometD and logout.
+				console.log("done");
+				disconnectAndLogout(cometD, sessionApi);
+				
+				//endregion
 			}
 		}
 		
@@ -220,11 +268,81 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
 			callback();
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			disconnectAndLogout(cometD, sessionApi);
 		}
 	
 	});
+}
+
+function answerCall(voiceApi, callId, errorCallback) {
+	//region Answering Call
+    //Answering call using voice api and call id.
+	voiceApi.answer(callId).then((resp) => {
+		
+	}).catch((err) => {
+		console.error("Cannot answer call");
+		if(err.response.text) console.log(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function holdCall(voiceApi, callId, errorCallback) {
+	//region Holding Call
+    //Holding call using voice api and call id.
+	voiceApi.hold(callId).then((resp) => {
+		
+	}).catch((err) => {
+		console.error("Cannot hold call");
+		if(err.response.text) console.log(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function retrieveCall(voiceApi, callId, errorCallback) {
+	//region Retrieving Call
+    //Retrieving call using voice api and call id.
+	voiceApi.retrieve(callId).then((resp) => {
+		
+	}).catch((err) => {
+		console.error("Cannot retrieve call");
+		if(err.response.text) console.log(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function releaseCall(voiceApi, callId, errorCallback) {
+	//region Releasing Call
+    //Releasing call using voice api and call id.
+	voiceApi.release(callId).then((resp) => {
+		
+	}).catch((err) => {
+		console.error("Cannot release call");
+		if(err.response.text) console.log(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function makeAgentNotReadyAfterCall(voiceApi, errorCallback) {
+	//region Making Agent NotReady and Setting Agent Work Mode
+	//Setting agent state to 'NotReady' using the voice api and specifying the agent's work mode using the agent work mode enum.
+	voiceApi.setAgentStateNotReady({
+		notReadyData: {
+			data: {
+				agentWorkMode: workspace.VoicenotreadyData.AgentWorkModeEnum.AfterCallWork
+			}
+		}
+	}).then((rep) => {
+		
+	}).catch((err) => {
+		console.error("Cannot set state!");
+		if(err.response.text) console.log(err.response.text);
+		errorCallback();
+    });
 }
 
 function disconnectAndLogout(cometD, sessionApi) {
@@ -236,7 +354,7 @@ function disconnectAndLogout(cometD, sessionApi) {
 				
 			}).catch((err) => {
 				console.error("Cannot log out");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 				process.exit(1);
 			});
 		} else {
@@ -247,9 +365,6 @@ function disconnectAndLogout(cometD, sessionApi) {
 	//endregion
 }
 
-function printError(err) {
-	if(err.response.text) console.log(err.response.text);
-}
 
 
 main();

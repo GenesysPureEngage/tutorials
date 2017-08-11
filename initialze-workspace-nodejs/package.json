@@ -1,5 +1,5 @@
 {
-    "name": "get-current-user-workspace-nodejs",
+    "name": "initialize-workspace-nodejs",
     "version": "1.0.0",
     "keywords": [
         "util",
@@ -8,10 +8,12 @@
         "client",
         "browser"
     ],
-    "author": "miremnev",
     "contributors": [],
     "dependencies": {
-        "genesys-workspace-client-js": "1.*.*",
+    	"cometd": "3.1.2",
+		"cometd-nodejs-client": "1.0.1",
+		"genesys-authorization-client-js": "1.0.29",
+		"genesys-workspace-client-js": "1.0.68"
     },
     "scripts": {
         "start": "node src/main.js"

@@ -28,21 +28,20 @@ import java.net.CookieManager;
 import java.util.Base64;
 
 public class Main {
+    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword>
     public static void main(String[] args) {
-    	
-    	final String apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
-        
-        final String clientId = "external_api_client";
-        final String clientSecret = "secret";
-        
-        final String workspaceUrl = "https://gws-usw1.genhtcc.com/workspace/v3";
-        final String authUrl = "https://gws-usw1.genhtcc.com/auth/v3";
-        
-        final String username = "agent-6504772888";
-        final String password = "Agent123";
+
+        final String apiKey = args[0];
+        final String clientId = args[1];
+        final String clientSecret = args[2];
+        final String apiUrl = args[3];
+        final String username = args[4];
+        final String password = args[5];
+
+        final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
+        final String authUrl = apiUrl;
 		
-		
-		//region Initialize Workspace Client
+        //region Initialize Workspace Client
         //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);
@@ -56,7 +55,7 @@ public class Main {
         //endregion
         
         try {
-        	
+
             //region Create SessionApi and VoiceApi instances
             //Creating instances of SessionApi and VoiceApi using the workspace ApiClient which will be used to make api calls.
             final SessionApi sessionApi = new SessionApi(client);
@@ -71,7 +70,7 @@ public class Main {
 			System.out.println("Retrieving access token...");
             
             final String authorization = "Basic " + new String(Base64.getEncoder().encode( (clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", clientId, username, password, authorization);
+            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "openid", authorization, "application/json", clientId, username, password);
             
             System.out.println("Retrieved access token");
             System.out.println("Initializing workspace...");
@@ -303,7 +302,7 @@ public class Main {
 		}
 		//endregion
     }
-    
+
     public static void holdCall(VoiceApi voiceApi, String callId) {
     	//region Holding Call
     	//Hold call using voice api and call id.
@@ -316,8 +315,8 @@ public class Main {
 			System.exit(1);
 		}
 		//endregion
-    }
-    
+}
+
     public static void retrieveCall(VoiceApi voiceApi, String callId) {
     	//region Retrieving Call
     	//Retrieve call using voice api and call id.
@@ -330,8 +329,8 @@ public class Main {
 			System.exit(1);
 		}
 		//endregion
-    }
-    
+	}
+
     public static void releaseCall(VoiceApi voiceApi, String callId) {
     	//region Release Call
     	//End call using voice api and call id.
@@ -345,7 +344,7 @@ public class Main {
 		}
 		//endregion
     }
-    
+
     public static void makeAgentNotReadyAfterCall(VoiceApi voiceApi) {
     	//region Making Agent NotReady and Setting Agent Work Mode
     	//Setting agent state to 'NotReady' using the voice api and specifying the agent's work mode using the agent work mode enum.
@@ -361,7 +360,7 @@ public class Main {
 		}
 		//endregion
     }
-    
+
     public static void disconnectAndLogout(BayeuxClient bayeuxClient, SessionApi sessionApi) {
     	//region Disconnecting and Logging Out
 		//Using the BayeuxClient and SessionApi to disconnect CometD and logout of the workspace session.
@@ -378,13 +377,4 @@ public class Main {
     }
     
 }
-
-
-
-
-
-
-
-
-
 

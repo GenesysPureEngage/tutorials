@@ -41,18 +41,18 @@ import java.net.CookieManager;
 
 
 public class Main {
+    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword> <agentNumber>
     public static void main(String[] args) {
-    	
-        final String apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
-        
-        final String clientId = "external_api_client";
-        final String clientSecret = "secret";
-        
-        final String workspaceUrl = "https://gws-usw1.genhtcc.com/workspace/v3";
-        final String authUrl = "https://gws-usw1.genhtcc.com/auth/v3";
-        
-        final String username = "agent-6504772888";
-        final String password = "Agent123";
+        final String apiKey = args[0];
+        final String clientId = args[1];
+        final String clientSecret = args[2];
+        final String apiUrl = args[3];
+        final String username = args[4];
+        final String password = args[5];
+        final String consultAgentNumber = args[6];
+
+        final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
+        final String authUrl = apiUrl;
 		
 		
 		//region Initialize Workspace Client
@@ -86,7 +86,7 @@ public class Main {
 			System.out.println("Retrieving access token...");
             
             final String authorization = "Basic " + new String(Base64.getEncoder().encode( (clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", clientId, username, password, authorization);
+            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "openid", authorization, "application/json", clientId, username, password);
             
             System.out.println("Retrieved access token");
             System.out.println("Initializing workspace...");

@@ -1,19 +1,16 @@
 {
-	"name": "create-user-provisioning-nodejs",
-	"version": "1.0.0",
-	"keywords": [
-            "util",
-            "functional",
-            "server",
-            "client",
-            "browser"
-	],
-	"author": "miremnev",
-	"contributors": [],
-	"dependencies": {
-            "genesys-provisioning-client-js": "1.*.*"
-	},
-	"scripts": {
-            "start": "node src/main.js"
-	}
+    "name": "create-user-provisioning-nodejs",
+    "version": "1.0.0",
+    "keywords": [
+        "util",
+        "functional",
+        "server",
+        "client",
+        "browser"
+    ],
+    "contributors": [],
+    "dependencies": {
+        "genesys-provisioning-client-js": "1.*.*"
+    },
+    "main": "src/main.js"
 }

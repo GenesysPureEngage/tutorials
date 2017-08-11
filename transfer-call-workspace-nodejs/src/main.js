@@ -4,7 +4,7 @@ const url = require('url');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
-//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
+//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword> <consultAgentNumber>
 const argv = process.argv.slice(2);
 const apiKey = argv[0];
 const clientId = argv[1];
@@ -12,6 +12,7 @@ const clientSecret = argv[2];
 const apiUrl = argv[3];
 const username = argv[4];
 const password = argv[5];
+const consultAgentNumber = argv[6];
 
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
@@ -47,8 +48,7 @@ function main() {
 		username: username,
 		password: password,
 		authorization: authorization
-	}).then((resp) => {
-		
+	}).then((resp) => {		
 		if(!resp["access_token"]) {
 			console.error("No access token");
 		
@@ -84,7 +84,7 @@ function main() {
 									
 								}).catch((err) => {
 									console.error("Cannot activate channels");
-									console.error(err.response.text);
+									if(err.response.text) console.error(err.response.text);
 									process.exit(1);
 								});
 							});
@@ -100,13 +100,13 @@ function main() {
 			
 			}).catch((err) => {
 				console.error("Cannot initialize workspace");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 			});
 		}
 	
 	}).catch((err) => {
 		console.error("Cannot get access token");
-		console.error(err.response.text);
+		if(err.response.text) console.error(err.response.text);
 	});
 }
 
@@ -162,7 +162,7 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 			console.log("Initialization subscription succesful");
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			process.exit(1);
 		}
 	
@@ -175,44 +175,106 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
 	
 	//region Handling Voice Events
 	//Here we subscribe to voice channel and handle voice events.
+	//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 	var hasActivatedChannels = false;
+	var hasCalledInitiateTransfer = false;
+	var hasCalledCompleteTransfer = false;
+	
+	var actionsCompleted = 0;
+	
+	var consultConnId = null;
+	var parentConnId = null;
 	
 	cometD.subscribe("/workspace/v3/voice", (message) => {
-		
-		if(message.data.messageType = "DnStateChanged") {
+		 
+		 if(message.data.messageType == "CallStateChanged") {
+			const callState = message.data.call.state;
+			const callId = message.data.call.id;
+			const capabilities = message.data.call.capabilities;
 			
-			if(!hasActivatedChannels) {
-				if(message.data.dn.agentState == "NotReady" ) {
-					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
-					
-					voiceApi.setAgentStateReady().then((resp) => {
-						if(resp.data.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.data.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-						
-					}).catch((err) => {
-						console.error("Cannot set agent state to 'Ready'");
-						console.error(JSON.stringify(err));
-						console.error(err.response.text);
-						disconnectAndLogout(cometD, sessionApi);
-					});
-					
-					hasActivatedChannels = true;
-				} else if(message.data.dn.agentState == "Ready" ) {
-					console.log("Agent state is 'Ready'");
+			if(callState == "Dialing") {
+				//region Dialing
+				//After the transfer is initiated, we will get a dialing event for the new call
+				console.log("Dialing");
+				console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+				
+				if(hasCalledInitiateTransfer) {
+					consultConnId = callId;
+				}
+				//endregion
+				
+			} if(callState == "Established") {
+				//region Established
+				//When the call state is 'Established' this means that the call is in progress.
+				//Here we check if this event if from answering the consult call.
+				if(hasActivatedChannels && parentConnId == null) {
+					console.log("Found established call: " + callId);
+					console.log("Initiating transfer...");
+					parentConnId = callId;
+					initiateTransfer(voiceApi, callId, consultAgentNumber);
+					hasCalledInitiateTransfer = true;
+				}
+				
+				if(hasCalledInitiateTransfer && callId == consultConnId) {
+					console.log("Answered");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+				
+			} else if(callState == "Held") {
+				//region Held
+				//The call state is changed to 'Held' when we hold the call. 
+				
+				if(hasCalledInitiateTransfer && callId == parentConnId) {
+					console.log("Held");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+			}
+			
+			if(callState == "Held" || callState == "Established") {
+				if(actionsCompleted == 2) {
+					console.log("Transfer initiated");
+					console.log("Completing transfer...");
+					completeTransfer(voiceApi, callId, parentConnId);
+					hasCalledCompleteTransfer = true;
+				}
+			}
+			
+			if(callState == "Released") {
+				//region Released
+				//The call state is changed to 'Released' when the call is ended.
+				if(hasCalledCompleteTransfer && (callId == parentConnId || callId == consultConnId)) {
+					console.log("Released");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+				
+				if(actionsCompleted == 4) {
+					console.log("Transfer complete");
+					//region Finishing up
+					//Now that the server is done transferring calls we can disconnect CometD and logout.
 					console.log("done");
 					disconnectAndLogout(cometD, sessionApi);
+					//endregion
+				}
+				
+			}
+			
+		} else if(message.data.messageType == "DnStateChanged") {
+			const agentState = message.data.dn.agentState;
+			if(!hasActivatedChannels) {
+				if(agentState == "NotReady" || agentState == "Ready") {
+					console.log("Channels activated");
+					console.log("Looking for established call...");
 					
+					hasActivatedChannels = true;
 				}
 			}
 		}
-		
 		
 	}, (reply) => {
 		if(reply.successful) {
@@ -220,11 +282,45 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
 			callback();
 		} else {
 			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
+			if(err.response.text) console.error(err.response.text);
 			disconnectAndLogout(cometD, sessionApi);
 		}
 	
 	});
+}
+
+function initiateTransfer(voiceApi, callId, destination, errorCallback) {
+	//region Initiating Transfer
+	//Initiate transfer to a destination number using the voice api.
+	voiceApi.initiateTransfer(callId, {
+		data: {
+			destination: destination
+		}
+	}).then((resp) => {
+		
+	}).catch ((err) => {
+		console.error("Cannot initiate transfer");
+		if(err.response.text) console.error(err.response.text);
+		errorCallback();
+	});
+	//endregion
+}
+
+function completeTransfer(voiceApi, callId, parentConnId) {
+	//region Completing Transfer
+	//Complete the transfer using the parent conn id and the voice api.
+	voiceApi.completeTransfer(callId, {
+		data: {
+			parentConnId: parentConnId
+		}
+	}).then((resp) => {
+		
+	}).catch ((err) => {
+		console.error("Cannot initiate transfer");
+		if(err.response.text) console.error(err.response.text);
+		errorCallback();
+	});
+	//endregion
 }
 
 function disconnectAndLogout(cometD, sessionApi) {
@@ -236,7 +332,7 @@ function disconnectAndLogout(cometD, sessionApi) {
 				
 			}).catch((err) => {
 				console.error("Cannot log out");
-				console.error(err.response.text);
+				if(err.response.text) console.error(err.response.text);
 				process.exit(1);
 			});
 		} else {
@@ -247,9 +343,6 @@ function disconnectAndLogout(cometD, sessionApi) {
 	//endregion
 }
 
-function printError(err) {
-	if(err.response.text) console.log(err.response.text);
-}
 
 
 main();

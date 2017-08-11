@@ -7,6 +7,7 @@ import com.genesys.workspace.api.VoiceApi;
 import com.genesys.workspace.model.ActivatechannelsData;
 import com.genesys.workspace.model.ApiSuccessResponse;
 import com.genesys.workspace.model.ChannelsData;
+
 import com.genesys.workspace.model.Call;
 import com.genesys.workspace.model.InitiateConferenceData;
 import com.genesys.workspace.model.VoicecallsidinitiateconferenceData;
@@ -38,27 +39,29 @@ import java.net.HttpCookie;
 import java.net.CookieManager;
 
 public class Main {
+	
+    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword> <agentNumber>
     public static void main(String[] args) {
-    	
-        final String apiKey = "qalvWPemcr4Gg9xB9470n7n9UraG1IFN7hgxNjd1";
-        
-        final String clientId = "external_api_client";
-        final String clientSecret = "secret";
-        
-        final String workspaceUrl = "https://gws-usw1.genhtcc.com/workspace/v3";
-        final String authUrl = "https://gws-usw1.genhtcc.com/auth/v3";
-        
-        final String username = "agent-6504772888";
-        final String password = "Agent123";
-        
-        final String consultAgentNumber = "6504772885";
-		
-		//region Initialize Workspace Client
+        final String apiKey = args[0];
+        final String clientId = args[1];
+        final String clientSecret = args[2];
+        final String apiUrl = args[3];
+        final String username = args[4];
+        final String password = args[5];
+        final String consultAgentNumber = args[6];
+
+        final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
+        final String authUrl = apiUrl;
+
+        //region Initialize Workspace Client
         //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);
         client.addDefaultHeader("x-api-key", apiKey);
+
         
+
+
         //region Initialize Authorization Client
         //Create and setup an ApiClient instance with your ApiKey and Authorization API URL.
         final ApiClient authClient = new ApiClient();
@@ -67,7 +70,6 @@ public class Main {
         //endregion
         
         try {
-        	
             //region Create SessionApi and VoiceApi instances
             //Creating instances of SessionApi and VoiceApi using the workspace ApiClient which will be used to make api calls.
             final SessionApi sessionApi = new SessionApi(client);
@@ -82,7 +84,7 @@ public class Main {
 			System.out.println("Retrieving access token...");
             
             final String authorization = "Basic " + new String(Base64.getEncoder().encode( (clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", clientId, username, password, authorization);
+            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "openid", authorization, "application/json", clientId, username, password);
             
             System.out.println("Retrieved access token");
             System.out.println("Initializing workspace...");
@@ -308,8 +310,7 @@ public class Main {
         }
     }
     
-	
-	public static void activateChannels(SessionApi sessionApi, String employeeId, String agentLogin) {
+    public static void activateChannels(SessionApi sessionApi, String employeeId, String agentLogin) {
 		
 		//region Activate Channels
 		//Activating channels for the user using employee ID and agent login.
@@ -333,75 +334,51 @@ public class Main {
 		}
 		//endregion
 	}
-    
+
     public static void initiateConference(VoiceApi voiceApi, String callId, String destination) {
-    	//region Initiating Conference
-    	//Initiate transfer to a destination number using the voice api.
-    	try {
-			VoicecallsidinitiateconferenceData data = new VoicecallsidinitiateconferenceData()
-				.destination(destination);
-			voiceApi.initiateConference(callId, new InitiateConferenceData().data(data));
-		} catch(ApiException ex) {
-			System.err.println("Cannot initiate conference");
-			System.err.println(ex);
-			System.exit(1);
-		}
-		//endregion
+        //region Initiating Conference
+        //Initiate conference to a destination number using the voice api.
+        try {
+            VoicecallsidinitiateconferenceData data = new VoicecallsidinitiateconferenceData()
+                    .destination(destination);
+            voiceApi.initiateConference(callId, new InitiateConferenceData().data(data));
+        } catch (ApiException ex) {
+            System.err.println("Cannot initiate conference");
+            System.err.println(ex);
+            System.exit(1);
+        }
+        //endregion
     }
-    
+
     public static void completeConference(VoiceApi voiceApi, String callId, String parentConnId) {
-    	//region Completing Conference
-    	//Complete the conference using the parent call id and the voice api.
-    	try {
-			VoicecallsidcompletetransferData data = new VoicecallsidcompletetransferData()
-				.parentConnId(parentConnId);
-			voiceApi.completeConference(callId, new CompleteConferenceData().data(data));
-		} catch(ApiException ex) {
-			System.err.println("Cannot complete conference");
-			System.err.println(ex);
-			System.exit(1);
-		}
-		//endregion
+        //region Completing Conference
+        //Complete the conference using the parent conn id and the voice api.
+        try {
+            VoicecallsidcompletetransferData data = new VoicecallsidcompletetransferData()
+                    .parentConnId(parentConnId);
+            voiceApi.completeConference(callId, new CompleteConferenceData().data(data));
+        } catch (ApiException ex) {
+            System.err.println("Cannot complete conference");
+            System.err.println(ex);
+            System.exit(1);
+        }
+        //endregion
     }
-    
-    public static List<Call> getCalls(VoiceApi voiceApi) {
-    	//region Getting Calls
-    	//Getting the current calls using the voice api.
-		try {
-			InlineResponse200 response = voiceApi.getCalls();
-			return response.getData().getCalls();
-		} catch(ApiException ex) {
-			System.err.println("Cannot get calls");
-			System.err.println(ex);
-			System.exit(1);
-		}
-		return null;
-		//endregion
-    }
-    
+
     public static void disconnectAndLogout(BayeuxClient bayeuxClient, SessionApi sessionApi) {
-    	//region Disconnecting and Logging Out
-		//Using the BayeuxClient and SessionApi to disconnect CometD and logout of the workspace session.
-		bayeuxClient.disconnect();
-		
-		try {
-			sessionApi.logout();
-		} catch(ApiException ex) {
-			System.err.println("Cannot log out");
-			System.err.println(ex);
-			System.exit(1);
-		}
-		//endregion
+        //region Disconnecting and Logging Out
+        //Using the BayeuxClient and SessionApi to disconnect CometD and logout of the workspace session.
+        bayeuxClient.disconnect();
+
+        try {
+            sessionApi.logout();
+        } catch (ApiException ex) {
+            System.err.println("Cannot log out");
+            System.err.println(ex);
+            System.exit(1);
+        }
+        //endregion
     }
-    
+
 }
-
-
-
-
-
-
-
-
-
 
