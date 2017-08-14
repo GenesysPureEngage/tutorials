@@ -7,8 +7,8 @@ import com.genesys.provisioning.model.ApiSuccessResponse;
 import com.genesys.provisioning.model.LoginData;
 import com.genesys.provisioning.model.LoginSuccessResponse;
 
+import java.net.CookieManager;
 import java.util.Arrays;
-import java.util.Optional;
 
 public class Main {
     //Usage: <apiKey> <username> <password> <apiUrl>
@@ -26,6 +26,8 @@ public class Main {
         final ApiClient client = new ApiClient();
         client.setBasePath(provisioningUrl);
         client.addDefaultHeader("x-api-key", apiKey);
+        client.getHttpClient().setCookieHandler(new CookieManager());
+        client.setDebugging(true);
         //endregion
 
         try {
@@ -44,17 +46,7 @@ public class Main {
                 throw new Exception("Cannot log in");
             }
             //endregion
-
-            //region Obtaining Provisioning API Session
-            //Obtaining sessionId and setting PROVISIONING_SESSIONID cookie to the client
-            Optional<String> sessionCookie = loginResp.getHeaders().get("Set-Cookie").stream().filter(v -> v.startsWith("PROVISIONING_SESSIONID")).findFirst();
-            if (sessionCookie.isPresent()) {
-                client.addDefaultHeader("Cookie", sessionCookie.get());
-            } else {
-                throw new Exception("Session not found");
-            }
-            //endregion
-
+			
             //region Creating UsersApi instance
             //Creating instance of UsersApi using the ApiClient
             final UsersApi usersApi = new UsersApi(client);
@@ -63,16 +55,18 @@ public class Main {
             //region Describing and creating a user
             //Filling necessary information and creating a user using UsersApi instance
             AddUserData usersData = new AddUserData();
-            usersData.setUserName("username");
-            usersData.setPassword("password");
+            usersData.setUserName("Username");
+            usersData.setPassword("Password123");
             usersData.setFirstName("FirstName");
             usersData.setLastName("LastName");
-            usersData.setAccessGroups(Arrays.asList("accessGroup"));
+            usersData.setAccessGroups(Arrays.asList("Users"));
+            usersData.setAgentGroups(Arrays.asList("tutorials"));
             ApiSuccessResponse resp = usersApi.addUser(usersData);
             if (resp.getStatus().getCode().equals(0)) {
                 System.out.println("user created");
             } 
             else {
+                System.err.println(resp);
                 System.err.println("Cannot create user");
             }
             //endregion

@@ -28,7 +28,6 @@ import java.net.CookieManager;
 public class Main {
     //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword>
     public static void main(String[] args) {
-
         final String apiKey = args[0];
         final String clientId = args[1];
         final String clientSecret = args[2];

@@ -16,12 +16,15 @@ const password = argv[5];
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
 
-function main() {
+
+async function main() {
+	
 	//region Initialize API Client
 	//Create and setup ApiClient instance with your ApiKey and Workspace API URL.
 	const workspaceClient = new workspace.ApiClient();
 	workspaceClient.basePath = workspaceUrl;
 	workspaceClient.defaultHeaders = { 'x-api-key': apiKey };
+	workspaceClient.enableCookies = true;
 
 	const authClient = new auth.ApiClient();
 	authClient.basePath = authUrl;
@@ -35,19 +38,22 @@ function main() {
 	//region Create AuthenticationApi instance
 	//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
 	const authApi = new auth.AuthenticationApi(authClient); 
-
-
-	//region Oauth2 Authentication
-	//Performing Oauth 2.0 authentication.
-	console.log("Retrieving access token...");
-
-	const authorization = "Basic " + new String(new Buffer(clientId + ":" + clientSecret).toString("base64"));
-	authApi.retrieveToken("password", "openid", {
-		clientId: clientId,
-		username: username,
-		password: password,
-		authorization: authorization
-	}).then((resp) => {
+	
+	let cometD;
+	let loggedIn = false;
+	
+	try {
+		//region Oauth2 Authentication
+		//Performing Oauth 2.0 authentication.
+		console.log("Retrieving access token...");
+		const authorization = "Basic " + new String(new Buffer(clientId + ":" + clientSecret).toString("base64"));
+		
+		let resp = await authApi.retrieveToken("password", "openid", {
+			clientId: clientId,
+			username: username,
+			password: password,
+			authorization: authorization
+		});
 		
 		if(!resp["access_token"]) {
 			console.error("No access token");
@@ -57,199 +63,208 @@ function main() {
 			console.log("Retrieved access token");
 			console.log("Initializing workspace...");
 	
-			sessionApi.initializeWorkspaceWithHttpInfo({"authorization": "Bearer " + resp["access_token"]}).then((resp) => {
-				//region Getting Session ID
-				//If the initialize-workspace call is successful, the it will return the workspace session ID as a cookie.
-				//We still must wait for 'InitializeWorkspaceComplete' cometD event in order to get user data for the user we are loggin in.
-				if(resp.data.status.code == 1) {
-					const sessionCookie = resp.response.header["set-cookie"].find(v => v.startsWith("WORKSPACE_SESSIONID"));
-					workspaceClient.defaultHeaders["Cookie"] = sessionCookie;
-					console.log("Got workspace session id");
-				
-					//region CometD
-					//Now that we have our workspace session ID we can start cometD and get initialization event.
-					startCometD(workspaceUrl, apiKey, sessionCookie, (cometD) => {
-						
-						waitForInitializeWorkspaceComplete(cometD, (user) => {
-							
-							startHandlingVoiceEvents(cometD, sessionApi, voiceApi, () => {
-								
-								console.log("Activating channels...");
-								sessionApi.activateChannels({
-									data: {
-										agentId: user.employeeId,
-										dn: user.agentLogin
-									}
-								}).then((resp) => {
-									
-								}).catch((err) => {
-									console.error("Cannot activate channels");
-									console.error(err.response.text);
-									process.exit(1);
-								});
-							});
-							
-						});
-						
-					});
-					//endregion
-				} else {
-					console.error("Cannot initialize workspace");
-					console.error("Code: " + resp.data.status.code);
-				}
+			resp = await sessionApi.initializeWorkspaceWithHttpInfo({"authorization": "Bearer " + resp["access_token"]});
 			
-			}).catch((err) => {
-				console.error("Cannot initialize workspace");
-				console.error(err.response.text);
-			});
+			//region Getting Session ID
+			//If the initialize-workspace call is successful, the it will return the workspace session ID as a cookie.
+			//We still must wait for 'InitializeWorkspaceComplete' cometD event in order to get user data for the user we are loggin in.
+			if(resp.data.status.code == 1) {
+				const sessionCookie = resp.response.header["set-cookie"].find(v => v.startsWith("WORKSPACE_SESSIONID"));
+				workspaceClient.defaultHeaders["Cookie"] = sessionCookie;
+				console.log("Got workspace session id");
+				loggedIn = true;
+				//region CometD
+				//Now that we have our workspace session ID we can start cometD and get initialization event.
+				cometD = await startCometD(workspaceUrl, apiKey, sessionCookie);
+				
+				const user = await waitForInitializeWorkspaceComplete(cometD);
+				
+				await startHandlingVoiceEvents(cometD, sessionApi, voiceApi);
+				//region Activating Channels
+				//Once we have subscribed to voice events we can activate channels.
+				
+				console.log("Activating channels...");
+				await sessionApi.activateChannels({
+					data: {
+						agentId: user.employeeId,
+						dn: user.agentLogin
+					}
+				});
+				//endregion
+				
+			} else {
+				console.error("Error initializing workspace");
+				console.error("Code: " + resp.data.status.code);
+			}
+			
 		}
-	
-	}).catch((err) => {
-		console.error("Cannot get access token");
-		console.error(err.response.text);
-	});
+		
+	} catch(err) {
+		if(err.response) console.log(err.response.text);
+		else console.log(err);
+		
+		if(loggedIn) {
+			await disconnectAndLogout(cometD, sessionApi);
+		}
+	}
 }
 
-function startCometD(workspaceUrl, apiKey, sessionCookie, callback) {
-	//region Setting up CometD
-	//Setting up cometD making sure api key and session cookie are included in requests.
-	const cometD = new cometDLib.CometD();
+function startCometD(workspaceUrl, apiKey, sessionCookie) {
+	return new Promise((resolve, reject) => {
+		//region Setting up CometD
+		//Setting up cometD making sure api key and session cookie are included in requests.
+		const cometD = new cometDLib.CometD();
 	
-	const hostname = url.parse(workspaceUrl).hostname;
-	const transport = cometD.findTransport('long-polling');
-	transport.context = {
-		cookieStore: {
-			[hostname]: [sessionCookie]
-		}
-	};
+		const hostname = url.parse(workspaceUrl).hostname;
+		const transport = cometD.findTransport('long-polling');
+		transport.context = {
+			cookieStore: {
+				[hostname]: [sessionCookie]
+			}
+		};
 	
-	cometD.configure({
-		url: workspaceUrl + "/notifications",
-		requestHeaders: {
-			"x-api-key": apiKey,
-			"Cookie": sessionCookie
-		}
-	});
-	
-	//region CometD Handshake
-	//Once the handshake is successful we can subscribe to channels.
-	console.log("CometD Handshake...");
-	cometD.handshake((reply) => {
-		if(reply.successful) {
-			console.log("Handshake successful");
-			callback(cometD);
+		cometD.configure({
+			url: workspaceUrl + "/notifications",
+			requestHeaders: {
+				"x-api-key": apiKey,
+				"Cookie": sessionCookie
+			}
+		});
+		//region CometD Handshake
+		//Perform handshek to start cometD. Once the handshake is successful we can subscribe to channels.
+		console.log("CometD Handshake...");
+		cometD.handshake((reply) => {
+			if(reply.successful) {
+				console.log("Handshake successful");
+				resolve(cometD);
 			
-		} else {
-			console.error("Handshake unsuccessful");
-		}
+			} else {
+				console.error("Handshake unsuccessful");
+				reject();
+			}
+		});
+		//endregion
 	});
-	
-	//endregion
 }
 
 function waitForInitializeWorkspaceComplete(cometD, callback) {
-	console.log("Subscribing to Initilaization channel...");
+	return new Promise((resolve, reject) => {
+		console.log("Subscribing to Initilaization channel...");
+		//region Subscribe to Initialization Channel
+		//Once the handshake is successful we can subscribe to a CometD channels to get events. 
+		//Here we subscribe to initialization channel to get 'WorkspaceInitializationComplete' event.
+		cometD.subscribe("/workspace/v3/initialization", (message) => {
+			if(message.data.state == "Complete") {
+				resolve(message.data.data.user);
+			}
+		}, (reply) => {
+			if(reply.successful) {
+				console.log("Initialization subscription succesful");
+			} else {
+				console.error("Subscription unsuccessful");
+				reject();
+			}
 	
-	//region Subscribe to Initialization Channel
-	//Once the handshake is successful we can subscribe to a CometD channels to get events. 
-	//Here we subscribe to initialization channel to get 'WorkspaceInitializationComplete' event.
-	cometD.subscribe("/workspace/v3/initialization", (message) => {
-		if(message.data.state == "Complete") {
-			callback(message.data.data.user);
-		}
-	}, (reply) => {
-		if(reply.successful) {
-			console.log("Initialization subscription succesful");
-		} else {
-			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
-			process.exit(1);
-		}
-	
+		});
 	});
-		
 }
 
-function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, callback) {
-	console.log("Subscribing to Voice channel...");
+
+function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
+	return new Promise((resolve, reject) => {
+		console.log("Subscribing to Voice channel...");
 	
-	//region Handling Voice Events
-	//Here we subscribe to voice channel and handle voice events.
+		//region Subscribing to Voice Channel
+		//Here we subscribe to voice channel so we can handle voice events.
+	
+		cometD.subscribe("/workspace/v3/voice", makeVoiceEventHandler(cometD, sessionApi, voiceApi) , (reply) => {
+			if(reply.successful) {
+				console.log("Voice subscription succesful");
+				resolve();
+			} else {
+				console.error("Subscription unsuccessful");
+				reject(err);
+			}
+	
+		});
+		
+		//endregion
+	});
+}
+
+function makeVoiceEventHandler(cometD, sessionApi, voiceApi) {
+	//region Event Handler
+	//Here we create the event handler which will handle voice events. 
 	var hasActivatedChannels = false;
 	
-	cometD.subscribe("/workspace/v3/voice", (message) => {
+	return async (message) => {
 		
 		if(message.data.messageType = "DnStateChanged") {
-			
+			//region Handle Different State changes
+			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
+			//Once the server is done changing the agent state to 'Ready' we will get another event.
 			if(!hasActivatedChannels) {
+				
 				if(message.data.dn.agentState == "NotReady" ) {
 					console.log("Channels activated");
 					console.log("Setting agent state to 'Ready'...");
-					
-					voiceApi.setAgentStateReady().then((resp) => {
-						if(resp.data.status.code != 1) {
+					try {
+						const resp = await voiceApi.setAgentStateReady();
+						if(resp.status.code != 1) {
 							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.data.status.code);
+							console.error("Code: " + resp.status.code);
 						} else {
 							console.log("Agent state set to 'Ready'");
 							console.log("done");
 						}
 						disconnectAndLogout(cometD, sessionApi);
-						
-					}).catch((err) => {
+				
+					} catch(err) {
 						console.error("Cannot set agent state to 'Ready'");
-						console.error(JSON.stringify(err));
-						console.error(err.response.text);
+						console.log(err);
 						disconnectAndLogout(cometD, sessionApi);
-					});
-					
+					}
+			
 					hasActivatedChannels = true;
-				} else if(message.data.dn.agentState == "Ready" ) {
-					console.log("Agent state is 'Ready'");
-					console.log("done");
-					disconnectAndLogout(cometD, sessionApi);
-					
 				}
 			}
-		}
-		
-		
-	}, (reply) => {
-		if(reply.successful) {
-			console.log("Voice subscription succesful");
-			callback();
-		} else {
-			console.error("Subscription unsuccessful");
-			console.error(err.response.text);
-			disconnectAndLogout(cometD, sessionApi);
-		}
-	
-	});
-}
-
-function disconnectAndLogout(cometD, sessionApi) {
-	//region Disconnect CometD and Logout Workspace
-	//Disconnecting cometD and ending out workspace session.
-	cometD.disconnect((reply) => {
-		if(reply.successful) {
-			sessionApi.logout().then((resp) => {
+			
+			if(message.data.dn.agentState == "Ready" ) {
+				console.log("Agent state is 'Ready'");
 				
-			}).catch((err) => {
-				console.error("Cannot log out");
-				console.error(err.response.text);
-				process.exit(1);
-			});
-		} else {
-			console.error("Cannot Disconnect CometD");
-			process.exit(1);
+				await disconnectAndLogout(cometD, sessionApi);
+				console.log("done");
+			}
+			//endregion
 		}
-	});
+		
+	}
 	//endregion
 }
 
-function printError(err) {
-	if(err.response.text) console.log(err.response.text);
-}
 
+async function disconnectAndLogout(cometD, sessionApi) {
+	//region Disconnect CometD and Logout Workspace
+	//Disconnecting cometD and ending out workspace session.
+	if(cometD) {
+		await new Promise((resolve, reject) => {
+			cometD.disconnect((reply) => {
+				if(reply.successful) {
+					resolve();
+				} else {
+					reject();
+				}
+			});
+		});
+	}
+	
+	try {
+		await sessionApi.logout();
+	} catch(err) {
+		console.error("Could not log out");
+		process.exit(1);
+	}
+	//endregion
+}
 
 main();

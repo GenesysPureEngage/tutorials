@@ -26,7 +26,6 @@ import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -34,14 +33,13 @@ import java.util.HashSet;
 import java.util.Arrays;
 import java.util.Base64;
 
-import java.net.URI;
-import java.net.HttpCookie;
 import java.net.CookieManager;
 
 public class Main {
 	
-    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword> <agentNumber>
+    //Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword> <consultAgentNumber>
     public static void main(String[] args) {
+    	
         final String apiKey = args[0];
         final String clientId = args[1];
         final String clientSecret = args[2];
@@ -49,25 +47,28 @@ public class Main {
         final String username = args[4];
         final String password = args[5];
         final String consultAgentNumber = args[6];
-
+		
         final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
         final String authUrl = apiUrl;
+        
+        CookieManager cookieManager = new CookieManager();
 
         //region Initialize Workspace Client
         //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);
         client.addDefaultHeader("x-api-key", apiKey);
-
+        client.getHttpClient().setCookieHandler(cookieManager);
         
-
-
+        
         //region Initialize Authorization Client
         //Create and setup an ApiClient instance with your ApiKey and Authorization API URL.
         final ApiClient authClient = new ApiClient();
         authClient.setBasePath(authUrl);
         authClient.addDefaultHeader("x-api-key", apiKey);
+        authClient.getHttpClient().setCookieHandler(cookieManager);
         //endregion
+        
         
         try {
             //region Create SessionApi and VoiceApi instances
@@ -77,26 +78,21 @@ public class Main {
             
             //region Create AuthenticationApi instance
             //Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
-            final AuthenticationApi authApi = new AuthenticationApi(authClient); 
-			
-			//region Oauth2 Authentication
-			//Performing Oauth 2.0 authentication.
-			System.out.println("Retrieving access token...");
-            
-            final String authorization = "Basic " + new String(Base64.getEncoder().encode( (clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "openid", authorization, "application/json", clientId, username, password);
-            
-            System.out.println("Retrieved access token");
+            final AuthenticationApi authApi = new AuthenticationApi(authClient);
+
+            //region Oauth2 Authentication
+            //Performing Oauth 2.0 authentication.
+            System.out.println("Retrieving access token...");
+            final String authorization = "Basic " + new String(Base64.getEncoder().encode((clientId + ":" + clientSecret).getBytes()));
+            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "scope",  authorization, "application/json", "external_api_client", username, password);
+            if(accessToken == null || accessToken.getAccessToken() == null) {
+                throw new Exception("Could not retrieve token");
+            }
+
             System.out.println("Initializing workspace...");
-            
-            final ApiResponse<ApiSuccessResponse> response = sessionApi.initializeWorkspaceWithHttpInfo("", "", "Bearer " + accessToken.getAccessToken());
-            
-            Optional<String> sessionCookie = response.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("WORKSPACE_SESSIONID")).findFirst();
-            
-            if(sessionCookie.isPresent()) {
-            	client.addDefaultHeader("Cookie", sessionCookie.get());
-            } else {
-            	throw new Exception("Could not find session");
+            final ApiSuccessResponse response = sessionApi.initializeWorkspace("", "", "Bearer " + accessToken.getAccessToken());
+            if(response.getStatus().getCode() != 0 && response.getStatus().getCode() != 1) {
+                throw new Exception("Cannot initialize workspace");
             }
             
             System.out.println("Got workspace session id");
@@ -105,12 +101,9 @@ public class Main {
             //Conifuring a Jetty HttpClient which will be used for CometD.
             final SslContextFactory sslContextFactory = new SslContextFactory();
 		
-			final HttpClient httpClient = new HttpClient(sslContextFactory);
-			httpClient.start();
-			
-			CookieManager manager = new CookieManager();
-			httpClient.setCookieStore(manager.getCookieStore());
-			httpClient.getCookieStore().add(new URI(workspaceUrl), new HttpCookie("WORKSPACE_SESSIONID", sessionCookie.get().split(";")[0].split("=")[1]));
+			final HttpClient httpClient = new HttpClient(new SslContextFactory());
+            httpClient.setCookieStore(cookieManager.getCookieStore());
+            httpClient.start();
 			
 			//region Creating BayeuxClient (CometD Client) and Making CometD handshake
 			//Here we configure CometD using long polling transport and making sure the api key is included in headers. The BayeuxClient instance is created and used to make the CometD handshake.
@@ -121,7 +114,6 @@ public class Main {
 			};
 			
 			final BayeuxClient bayeuxClient = new BayeuxClient(workspaceUrl + "/notifications", transport);
-			
 			
 			bayeuxClient.handshake((ClientSessionChannel handshakeChannel, Message handshakeMessage) -> {
 				

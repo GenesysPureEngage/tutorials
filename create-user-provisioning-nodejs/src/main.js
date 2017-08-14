@@ -13,6 +13,7 @@ const provisioningUrl = `${apiUrl}/provisioning/v3`;
 //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
 const provisioningClient = new provisioning.ApiClient();
 provisioningClient.basePath = provisioningUrl;
+provisioningClient.enableCookies = true;
 provisioningClient.defaultHeaders = { 'x-api-key': apiKey };
 
 //region Create SessionApi instance
@@ -23,8 +24,9 @@ const sessionApi = new provisioning.SessionApi(provisioningClient);
 //Logging in using our username and password
 console.log("Logging in...");
 sessionApi.login({
-  "domain_username": username,
-  "password": password
+<<<<<<< HEAD
+  domain_username: username,
+  password: password
 }).then((resp) => {
 	
 	if(resp.status.code !== 0) {
@@ -78,6 +80,45 @@ sessionApi.login({
 	
 	console.error("Cannot login");
 	console.error(err);
+=======
+  domain_username: clientId,
+  password: clientSecret
+}).then(resp => {
+    if(resp.status.code !== 0) {
+        console.error(resp);
+        throw new Error('Cannot log in');
+    }
+    
+    //region Creating UsersApi instance
+    //Creating instance of UsersApi using the ApiClient
+    const usersApi = new provisioning.UsersApi(provisioningClient);
+
+    //region Describing and creating a user
+    //Creating a user using UsersApi instance
+    usersApi.addUser({
+            userName: "userName",
+            firstName: "firstName",
+            lastName: "lastName",
+            password: "Password1",
+            agentGroup: ['tutorials'],
+            accessGroup: [ "Users" ]
+    }).then(res => {
+        if(res.status.code !== 0) {
+            console.error(res);
+            throw new Error('Cannot create user');
+        }
+        
+        console.log('User created!');
+    }).catch(err => {
+        console.error(err);
+    }).then(() => {
+        //region Logging out
+        //Ending our Provisioning API session
+        sessionApi.logout();
+    });
+}).catch(err => {
+    console.error(err);
+>>>>>>> 4c563d71a192b843ac9aec99ee09df43738e83f1
 });
 
 

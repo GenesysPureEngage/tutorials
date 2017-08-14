@@ -28,20 +28,20 @@ import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import java.util.Optional;
+import com.google.gson.internal.LinkedTreeMap;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Base64;
 import java.math.BigDecimal;
 
-import java.net.URI;
-import java.net.HttpCookie;
 import java.net.CookieManager;
 
 
 public class Main {
-    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword> <agentNumber>
+	
+    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl> <agentUsername> <agentPassword> <searchTerm>
     public static void main(String[] args) {
         final String apiKey = args[0];
         final String clientId = args[1];
@@ -49,23 +49,26 @@ public class Main {
         final String apiUrl = args[3];
         final String username = args[4];
         final String password = args[5];
-        final String consultAgentNumber = args[6];
+        final String searchTerm = args[6];
 
         final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
         final String authUrl = apiUrl;
 		
+		CookieManager cookieManager = new CookieManager();
 		
 		//region Initialize Workspace Client
         //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
         final ApiClient client = new ApiClient();
         client.setBasePath(workspaceUrl);
         client.addDefaultHeader("x-api-key", apiKey);
+        client.getHttpClient().setCookieHandler(cookieManager);
         
         //region Initialize Authorization Client
         //Create and setup an ApiClient instance with your ApiKey and Authorization API URL.
         final ApiClient authClient = new ApiClient();
         authClient.setBasePath(authUrl);
         authClient.addDefaultHeader("x-api-key", apiKey);
+        authClient.getHttpClient().setCookieHandler(cookieManager);
         //endregion
         
         
@@ -83,22 +86,17 @@ public class Main {
 			
 			//region Oauth2 Authentication
 			//Performing Oauth 2.0 authentication.
-			System.out.println("Retrieving access token...");
-            
-            final String authorization = "Basic " + new String(Base64.getEncoder().encode( (clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "openid", authorization, "application/json", clientId, username, password);
-            
-            System.out.println("Retrieved access token");
+			 System.out.println("Retrieving access token...");
+            final String authorization = "Basic " + new String(Base64.getEncoder().encode((clientId + ":" + clientSecret).getBytes()));
+            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "scope",  authorization, "application/json", "external_api_client", username, password);
+            if(accessToken == null || accessToken.getAccessToken() == null) {
+                throw new Exception("Could not retrieve token");
+            }
+			
             System.out.println("Initializing workspace...");
-            
-            final ApiResponse<ApiSuccessResponse> response = sessionApi.initializeWorkspaceWithHttpInfo("", "", "Bearer " + accessToken.getAccessToken());
-            
-            Optional<String> session = response.getHeaders().get("set-cookie").stream().filter(v -> v.startsWith("WORKSPACE_SESSIONID")).findFirst();
-            
-            if(session.isPresent()) {
-            	client.addDefaultHeader("Cookie", session.get());
-            } else {
-            	throw new Exception("Could not find session");
+            final ApiSuccessResponse response = sessionApi.initializeWorkspace("", "", "Bearer " + accessToken.getAccessToken());
+            if(response.getStatus().getCode() != 0 && response.getStatus().getCode() != 1) {
+                throw new Exception("Cannot initialize workspace");
             }
             
             System.out.println("Got workspace session id");
@@ -108,12 +106,9 @@ public class Main {
             final SslContextFactory sslContextFactory = new SslContextFactory();
 		
 			final HttpClient httpClient = new HttpClient(sslContextFactory);
+			httpClient.setCookieStore(cookieManager.getCookieStore());
 			httpClient.start();
 			
-			
-			CookieManager manager = new CookieManager();
-			httpClient.setCookieStore(manager.getCookieStore());
-			httpClient.getCookieStore().add(new URI(workspaceUrl), new HttpCookie("WORKSPACE_SESSIONID", session.get().split(";")[0].split("=")[1]));
 			
 			
 			//region Creating BayeuxClient (CometD Client) and Making CometD handshake
@@ -188,21 +183,31 @@ public class Main {
 								if(!hasActivatedChannels) {
 									hasActivatedChannels = true;
 									System.out.println("Getting targets...");
-									List<Target> targets = getTargets(targetsApi, "agent-1");
+									List<Target> targets = getTargets(targetsApi, searchTerm);
 									if(targets.size() == 0) {
 										System.err.println("Search came up empty");
 										System.exit(1);
 									} else {
 										System.out.println("Found targets: " + targets);
-										System.out.println("Calling target: " + targets.get(0));
 										
-										makeCall(voiceApi, targets.get(0).getNumber());
+										System.out.println("Calling target: " + targets.get(0));
+										String phoneNumber = null;
+										try {
+											phoneNumber = ((Map)((List)((Map)targets.get(0).getAvailability()).get("channels")).get(0)).get("phoneNumber").toString();
+										} catch(Exception ex) {
+											
+											System.err.println("No phone number");
+										}
+										if(phoneNumber != null) {
+											System.out.println("Calling Phone number: " + phoneNumber);
+											makeCall(voiceApi, phoneNumber);
+										}
 										
 										//region Finishing up
 										//Now that we have made a call to a target we can disconnect ant logout.
 										System.out.println("Disconnecting and logging out...");
 										disconnectAndLogout(bayeuxClient, sessionApi);
-						
+										
 										System.out.println("done");
 										System.exit(0);
 									}
@@ -267,7 +272,7 @@ public class Main {
 		//Getting target agents that match the specified search term using the targets api.
 		try {
 			
-			TargetsResponse response = targetsApi.get(searchTerm, "", "", "asc", BigDecimal.valueOf(10), "exact");
+			TargetsResponse response = targetsApi.get(searchTerm, "", "", "asc", BigDecimal.valueOf(10), null);
 			if(response.getStatus().getCode() != 0) {
 				System.err.println("Cannot get targets");
 			}
