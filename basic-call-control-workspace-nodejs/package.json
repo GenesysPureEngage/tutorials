@@ -1,5 +1,5 @@
 {
-  "name": "get-current-session-workspace-nodejs",
+  "name": "basic-call-control-workspace-nodejs",
   "version": "1.0.0",
   "keywords": [
     "util",
@@ -10,8 +10,8 @@
   ],
   "contributors": [],
   "dependencies": {
-    "genesys-authorization-client-js": "1.0.35",
-    "genesys-workspace-client-js": "1.0.74"
+    "yargs": "^8.0.2",
+    "genesys-workspace-client-js": "^1.0.84"
   },
   "main": "src/main.js"
 }

@@ -16,7 +16,6 @@ const password = argv[5];
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
 
-
 async function main() {
 	
 	//region Initialize API Client
@@ -193,55 +192,122 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
 }
 
 function makeVoiceEventHandler(cometD, sessionApi, voiceApi) {
-	//region Event Handler
-	//Here we create the event handler which will handle voice events. 
+	
+	//region Making Voice Handler
+	//Here we handle different cometD messages.
+	//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 	var hasActivatedChannels = false;
+	var hasCalledAlternate = false;
+	
+	var establishedCallConnId = null;
+	var heldCallConnId = null;
+	var actionsCompleted = 0;
 	
 	return async (message) => {
-		
-		if(message.data.messageType = "DnStateChanged") {
-			//region Handle Different State changes
-			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-			//Once the server is done changing the agent state to 'Ready' we will get another event.
-			if(!hasActivatedChannels) {
-				
-				if(message.data.dn.agentState == "NotReady" ) {
-					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
-					try {
-						const resp = await voiceApi.setAgentStateReady();
-						if(resp.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-				
-					} catch(err) {
-						console.error("Cannot set agent state to 'Ready'");
-						console.log(err);
-						disconnectAndLogout(cometD, sessionApi);
+		 try {
+			 if(message.data.messageType == "CallStateChanged") {
+				const callState = message.data.call.state;
+				const callId = message.data.call.id;
+				const capabilities = message.data.call.capabilities;
+			
+				if(callState == "Established") {
+					//region Established
+					//When the call state is 'Established' this means that the call is in progress.
+					//This event is used both to find established calls when the program starts and to signal that a call has been retrieved as a result of alternating. 
+					if(establishedCallConnId == null) {
+						console.log("Found established call: " + callId);
+						establishedCallConnId = callId;
 					}
 			
-					hasActivatedChannels = true;
+					if(callId == heldCallConnId) {
+						console.log("Retrieved");
+						console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					}
+		
+					//endregion
+				} else if(callState == "Held") {
+					//region Held
+					//This event is used both to find held calls when the program starts and signal that a call has been held as a result of alternating.
+					if(heldCallConnId == null) {
+						console.log("Found held call: " + callId);
+						heldCallConnId = callId;
+						if(heldCallConnId == establishedCallConnId) {
+							establishedCallConnId = null;
+							console.log("(Established call is now held, still waiting for established call)");
+						}
+					}
+		
+					if(callId == establishedCallConnId) { 
+						console.log("Held");
+						console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					}
+					//endregion
+				}  else if(callState == "Released") {
+					//region Released
+					//The call state is changed to 'Released' when the call is ended.
+					console.log("Released");
+					//endregion
+				}
+			
+				//region Check for Held and Established Calls
+				//Check if held and established calls have been found.
+				//If so, alternate between them.
+				if(establishedCallConnId != null && heldCallConnId != null && !hasCalledAlternate) {
+					console.log("Alternating calls...");
+					await alternateCalls(voiceApi, establishedCallConnId, heldCallConnId);
+					hasCalledAlternate = true;
+				}
+			
+				//region Check for Actions Completed
+				//Check if this event corresponds to one of the two events that should be triggered by alternating.
+				//If both actions are completed then finish the program.
+				if(callState == "Established" && callId == heldCallConnId ||
+				   callState == "Held" && callId == establishedCallConnId) {
+			
+					actionsCompleted ++;
+			
+					if(actionsCompleted == 2) {
+						console.log("Alternated calls");
+						//region Finishing up
+						//Now that the server is done alternating calls we can disconnect CometD and logout.
+						
+						await disconnectAndLogout(cometD, sessionApi);
+						console.log("done");
+						//endregion
+					}
+				}
+			
+			} else if(message.data.messageType == "DnStateChanged") {
+				const agentState = message.data.dn.agentState;
+				if(!hasActivatedChannels) {
+					if(agentState == "NotReady" || agentState == "Ready") {
+						console.log("Channels activated");
+						console.log("Looking for held and established calls...");
+					
+						hasActivatedChannels = true;
+					}
 				}
 			}
+		} catch(err) {
+			if(err.response) console.error(err.response.text);
+			else console.error(err);
 			
-			if(message.data.dn.agentState == "Ready" ) {
-				console.log("Agent state is 'Ready'");
-				
-				await disconnectAndLogout(cometD, sessionApi);
-				console.log("done");
-			}
-			//endregion
+			disconnectAndLogout(cometD, sessionApi);
 		}
 		
-	}
-	//endregion
+	};
 }
 
+function alternateCalls(voiceApi, callId, heldConnId) {
+	//region Alternating Calls
+	//Switch fron a the current call to a held call using the voice api.
+	return voiceApi.alternate(callId, {
+		data: {
+			heldConnId: heldConnId
+		}
+	});
+	//endregion
+}
 
 async function disconnectAndLogout(cometD, sessionApi) {
 	//region Disconnect CometD and Logout Workspace
@@ -266,5 +332,7 @@ async function disconnectAndLogout(cometD, sessionApi) {
 	}
 	//endregion
 }
+
+
 
 main();

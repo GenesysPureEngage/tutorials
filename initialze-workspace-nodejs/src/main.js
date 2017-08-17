@@ -1,6 +1,7 @@
 const workspace = require('genesys-workspace-client-js');
 const auth = require('genesys-authorization-client-js');
 const url = require('url');
+const Promise = require('promise');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
@@ -16,7 +17,6 @@ const password = argv[5];
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
 
-
 async function main() {
 	
 	//region Initialize API Client
@@ -30,10 +30,9 @@ async function main() {
 	authClient.basePath = authUrl;
 	authClient.defaultHeaders = { 'x-api-key': apiKey };
 
-	//region Create SessionApi and VoiceApi instances
-	//Creating instances of SessionApi and VoiceApi using the ApiClient.
+	//region Create SessionApi instance
+	//Creating instance of SessionApi using the ApiClient.
 	const sessionApi = new workspace.SessionApi(workspaceClient);
-	const voiceApi = new workspace.VoiceApi(workspaceClient);
 
 	//region Create AuthenticationApi instance
 	//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
@@ -79,17 +78,9 @@ async function main() {
 				
 				const user = await waitForInitializeWorkspaceComplete(cometD);
 				
-				await startHandlingVoiceEvents(cometD, sessionApi, voiceApi);
-				//region Activating Channels
-				//Once we have subscribed to voice events we can activate channels.
-				
-				console.log("Activating channels...");
-				await sessionApi.activateChannels({
-					data: {
-						agentId: user.employeeId,
-						dn: user.agentLogin
-					}
-				});
+				console.log("User: " + JSON.stringify(user));
+				await disconnectAndLogout(cometD, sessionApi);
+				console.log("done");
 				//endregion
 				
 			} else {
@@ -169,80 +160,6 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 	});
 }
 
-
-function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
-	return new Promise((resolve, reject) => {
-		console.log("Subscribing to Voice channel...");
-	
-		//region Subscribing to Voice Channel
-		//Here we subscribe to voice channel so we can handle voice events.
-	
-		cometD.subscribe("/workspace/v3/voice", makeVoiceEventHandler(cometD, sessionApi, voiceApi) , (reply) => {
-			if(reply.successful) {
-				console.log("Voice subscription succesful");
-				resolve();
-			} else {
-				console.error("Subscription unsuccessful");
-				reject(err);
-			}
-	
-		});
-		
-		//endregion
-	});
-}
-
-function makeVoiceEventHandler(cometD, sessionApi, voiceApi) {
-	//region Event Handler
-	//Here we create the event handler which will handle voice events. 
-	var hasActivatedChannels = false;
-	
-	return async (message) => {
-		
-		if(message.data.messageType = "DnStateChanged") {
-			//region Handle Different State changes
-			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-			//Once the server is done changing the agent state to 'Ready' we will get another event.
-			if(!hasActivatedChannels) {
-				
-				if(message.data.dn.agentState == "NotReady" ) {
-					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
-					try {
-						const resp = await voiceApi.setAgentStateReady();
-						if(resp.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-				
-					} catch(err) {
-						console.error("Cannot set agent state to 'Ready'");
-						console.log(err);
-						disconnectAndLogout(cometD, sessionApi);
-					}
-			
-					hasActivatedChannels = true;
-				}
-			}
-			
-			if(message.data.dn.agentState == "Ready" ) {
-				console.log("Agent state is 'Ready'");
-				
-				await disconnectAndLogout(cometD, sessionApi);
-				console.log("done");
-			}
-			//endregion
-		}
-		
-	}
-	//endregion
-}
-
-
 async function disconnectAndLogout(cometD, sessionApi) {
 	//region Disconnect CometD and Logout Workspace
 	//Disconnecting cometD and ending out workspace session.
@@ -266,5 +183,6 @@ async function disconnectAndLogout(cometD, sessionApi) {
 	}
 	//endregion
 }
+
 
 main();

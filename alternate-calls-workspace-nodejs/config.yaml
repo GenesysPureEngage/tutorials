@@ -2,4 +2,4 @@ title: Alternate Between Two Calls using the Workspace API
 description: This example shows you how to switch between two calls when you have one held call and one established call.
 categories: 
   - workspace
-displayName: Java
+displayName: Node.Js

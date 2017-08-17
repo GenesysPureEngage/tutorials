@@ -1,10 +1,11 @@
 const workspace = require('genesys-workspace-client-js');
 const auth = require('genesys-authorization-client-js');
 const url = require('url');
+const Promise = require('promise');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
-//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
+//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword> <searchTerm>
 const argv = process.argv.slice(2);
 const apiKey = argv[0];
 const clientId = argv[1];
@@ -12,10 +13,10 @@ const clientSecret = argv[2];
 const apiUrl = argv[3];
 const username = argv[4];
 const password = argv[5];
+const searchTerm = argv[6];
 
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
-
 
 async function main() {
 	
@@ -30,10 +31,11 @@ async function main() {
 	authClient.basePath = authUrl;
 	authClient.defaultHeaders = { 'x-api-key': apiKey };
 
-	//region Create SessionApi and VoiceApi instances
-	//Creating instances of SessionApi and VoiceApi using the ApiClient.
+	//region Create SessionApi, VoiceApi and TargetsApi instances
+	//Creating instances of SessionApi, VoiceApi and TargetsApi using the ApiClient.
 	const sessionApi = new workspace.SessionApi(workspaceClient);
 	const voiceApi = new workspace.VoiceApi(workspaceClient);
+	const targetsApi = new workspace.TargetsApi(workspaceClient);
 
 	//region Create AuthenticationApi instance
 	//Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
@@ -79,7 +81,7 @@ async function main() {
 				
 				const user = await waitForInitializeWorkspaceComplete(cometD);
 				
-				await startHandlingVoiceEvents(cometD, sessionApi, voiceApi);
+				await startHandlingVoiceEvents(cometD, sessionApi, voiceApi, targetsApi);
 				//region Activating Channels
 				//Once we have subscribed to voice events we can activate channels.
 				
@@ -147,7 +149,7 @@ function startCometD(workspaceUrl, apiKey, sessionCookie) {
 	});
 }
 
-function waitForInitializeWorkspaceComplete(cometD, callback) {
+function waitForInitializeWorkspaceComplete(cometD) {
 	return new Promise((resolve, reject) => {
 		console.log("Subscribing to Initilaization channel...");
 		//region Subscribe to Initialization Channel
@@ -170,14 +172,14 @@ function waitForInitializeWorkspaceComplete(cometD, callback) {
 }
 
 
-function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
+function startHandlingVoiceEvents(cometD, sessionApi, voiceApi, targetsApi) {
 	return new Promise((resolve, reject) => {
 		console.log("Subscribing to Voice channel...");
 	
 		//region Subscribing to Voice Channel
 		//Here we subscribe to voice channel so we can handle voice events.
 	
-		cometD.subscribe("/workspace/v3/voice", makeVoiceEventHandler(cometD, sessionApi, voiceApi) , (reply) => {
+		cometD.subscribe("/workspace/v3/voice", makeVoiceEventHandler(cometD, sessionApi, voiceApi, targetsApi) , (reply) => {
 			if(reply.successful) {
 				console.log("Voice subscription succesful");
 				resolve();
@@ -192,56 +194,102 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
 	});
 }
 
-function makeVoiceEventHandler(cometD, sessionApi, voiceApi) {
-	//region Event Handler
-	//Here we create the event handler which will handle voice events. 
+function makeVoiceEventHandler(cometD, sessionApi, voiceApi, targetsApi) {
+	
+	
+	//region Making Voice Handler
+	//Here we handle different CometD messages.
+	//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 	var hasActivatedChannels = false;
+	var hasCalledInitiateTransfer = false;
+	var hasCalledCompleteTransfer = false;
+	
+	var actionsCompleted = 0;
+	
+	var consultConnId = null;
+	var parentConnId = null;
 	
 	return async (message) => {
-		
-		if(message.data.messageType = "DnStateChanged") {
-			//region Handle Different State changes
-			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-			//Once the server is done changing the agent state to 'Ready' we will get another event.
-			if(!hasActivatedChannels) {
-				
-				if(message.data.dn.agentState == "NotReady" ) {
-					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
-					try {
-						const resp = await voiceApi.setAgentStateReady();
-						if(resp.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-				
-					} catch(err) {
-						console.error("Cannot set agent state to 'Ready'");
-						console.log(err);
-						disconnectAndLogout(cometD, sessionApi);
-					}
+		try {
+			if(message.data.messageType == "DnStateChanged") {
+				//region Handle Different State changes
+				//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
+				//Once the server is done changing the agent state to 'Ready' we will get another event.
 			
-					hasActivatedChannels = true;
+				const agentState = message.data.dn.agentState;
+			
+				if(!hasActivatedChannels) {
+					if(agentState == "NotReady" || agentState == "Ready") {
+						console.log("Channels activated");
+						hasActivatedChannels = true;
+					
+						console.log("Getting targets...");
+					
+						const targets = await getTargets(targetsApi, searchTerm);
+						
+						//region Calling Target
+						//Here we print the first10 targets returned from the search and call the first one if it exists.
+						if(targets.length == 0) {
+							console.error("Search came up empty");
+							disconnectAndLogout(cometD, sessionApi);
+					
+						} else {
+						
+							console.log("Found targets: " + JSON.stringify(targets));
+							console.log("Calling target: " + targets[0].userName);
+							
+							const phoneNumber = targets[0]["availability"]["channels"][0]["phoneNumber"];
+							console.log("Phone number: " + phoneNumber);
+							await makeCall(voiceApi, phoneNumber);
+							//region Finishing up
+							//Now that we have made a call to a target we can disconnect ant logout.
+							
+							await disconnectAndLogout(cometD, sessionApi);
+							console.log("done");
+							//endregion
+							
+						}
+					
+					}
 				}
 			}
+		} catch(err) {
+			if(err.response) console.error(err.response.text);
+			else console.error(err);
 			
-			if(message.data.dn.agentState == "Ready" ) {
-				console.log("Agent state is 'Ready'");
-				
-				await disconnectAndLogout(cometD, sessionApi);
-				console.log("done");
-			}
-			//endregion
+			disconnectAndLogout(cometD, sessionApi);
 		}
 		
+	};
+}
+
+async function getTargets(targetsApi, searchTerm, callback) {
+	
+	//region Get Targets
+	//Getting target agents that match the specified search term using the targets api.
+	const resp = await targetsApi.get(searchTerm, {
+		limit: 10
+	});
+		
+	if(resp.status.code != 0) {
+		console.error("Cannot get targets");
+		console.error("Code: " + resp.status.code);
+		throw "";
 	}
+	return resp.data.targets;
 	//endregion
 }
 
+function makeCall(voiceApi, destination, callback) {
+	//region Making a Call
+	//Using the voice api to make a call to the specified destination.
+	return voiceApi.makeCall({
+		data: {
+			destination: destination
+		}
+	});
+	//endregion
+}
 
 async function disconnectAndLogout(cometD, sessionApi) {
 	//region Disconnect CometD and Logout Workspace

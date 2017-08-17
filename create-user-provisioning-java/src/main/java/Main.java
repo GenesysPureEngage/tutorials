@@ -6,45 +6,47 @@ import com.genesys.provisioning.model.AddUserData;
 import com.genesys.provisioning.model.ApiSuccessResponse;
 import com.genesys.provisioning.model.LoginData;
 import com.genesys.provisioning.model.LoginSuccessResponse;
+
 import java.net.CookieManager;
 import java.util.Arrays;
 
 public class Main {
-    //Usage: <apiKey> <clientId> <clietnSecret> <apiUrl>
+    //Usage: <apiKey> <username> <password> <apiUrl>
     public static void main(String[] args) {
         final String apiKey = args[0];
-        final String clientId = args[1];
-        final String clientSecret = args[2];
+        final String username = args[1];
+        final String password = args[2];
         final String apiUrl = args[3];
-
-        final String provisionUrl = String.format("%s/provisioning/v3", apiUrl);
+        
+        final String provisioningUrl = String.format("%s/provisioning/v3", apiUrl);
         
         //region Initialize API Client
         //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
+        
         final ApiClient client = new ApiClient();
-        client.setBasePath(provisionUrl);
+        client.setBasePath(provisioningUrl);
         client.addDefaultHeader("x-api-key", apiKey);
         client.getHttpClient().setCookieHandler(new CookieManager());
         client.setDebugging(true);
         //endregion
 
         try {
-            //region Create LoginApi instance
-            //Creating instance of LoginApi using the ApiClient.
-            final SessionApi loginApi = new SessionApi(client);
-            //endregion
-            
-            //region 3 Logging in Provisioning API
-            //Logging in using our username and password
-            LoginData loginData = new LoginData();
-            loginData.setDomainUsername(clientId);
-            loginData.setPassword(clientSecret);
-            ApiResponse<LoginSuccessResponse> loginResp = loginApi.loginWithHttpInfo(loginData);
-            if (loginResp.getData().getStatus().getCode() != 0) {
-                    throw new Exception("Cannot log in");
-            }
+            //region Create SessionApi instance
+            //Creating instance of SessionApi using the ApiClient.
+            final SessionApi sessionApi = new SessionApi(client);
             //endregion
 
+            //region Logging in Provisioning API
+            //Logging in using our username and password
+            LoginData loginData = new LoginData();
+            loginData.setDomainUsername(username);
+            loginData.setPassword(password);
+            ApiResponse<LoginSuccessResponse> loginResp = sessionApi.loginWithHttpInfo(loginData);
+            if (loginResp.getData().getStatus().getCode() != 0) {
+                throw new Exception("Cannot log in");
+            }
+            //endregion
+			
             //region Creating UsersApi instance
             //Creating instance of UsersApi using the ApiClient
             final UsersApi usersApi = new UsersApi(client);
@@ -71,16 +73,14 @@ public class Main {
 
             //region Logging out
             //Ending our Provisioning API session
-            loginApi.logout();
+            sessionApi.logout();
             //endregion
         } 
         catch (Exception ex) {
-                System.err.println(ex);
+        	ex.printStackTrace();
+            System.err.println(ex);
         }
     }
 }
-
-
-
 
 

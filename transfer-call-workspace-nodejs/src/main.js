@@ -4,7 +4,7 @@ const url = require('url');
 const cometDLib = require('cometd');
 require('cometd-nodejs-client').adapt();
 
-//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
+//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword> <consultAgentNumber>
 const argv = process.argv.slice(2);
 const apiKey = argv[0];
 const clientId = argv[1];
@@ -12,10 +12,10 @@ const clientSecret = argv[2];
 const apiUrl = argv[3];
 const username = argv[4];
 const password = argv[5];
+const consultAgentNumber = argv[6];
 
 const workspaceUrl = `${apiUrl}/workspace/v3`;
 const authUrl = `${apiUrl}`;
-
 
 async function main() {
 	
@@ -193,55 +193,138 @@ function startHandlingVoiceEvents(cometD, sessionApi, voiceApi) {
 }
 
 function makeVoiceEventHandler(cometD, sessionApi, voiceApi) {
-	//region Event Handler
-	//Here we create the event handler which will handle voice events. 
+	//region Making Event Handler
+	//In order to specify why certain CometD events are taking place it is necessary to store some information about what has happened.
 	var hasActivatedChannels = false;
+	var hasCalledInitiateTransfer = false;
+	var hasCalledCompleteTransfer = false;
+	
+	var actionsCompleted = 0;
+	
+	var consultConnId = null;
+	var parentConnId = null;
 	
 	return async (message) => {
+		try {
+		if(message.data.messageType == "CallStateChanged") {
+			const callState = message.data.call.state;
+			const callId = message.data.call.id;
+			const capabilities = message.data.call.capabilities;
+	
+			if(callState == "Dialing") {
+				//region Dialing
+				//After the transfer is initiated, we will get a dialing event for the new call
+				console.log("Dialing");
+				console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
 		
-		if(message.data.messageType = "DnStateChanged") {
-			//region Handle Different State changes
-			//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-			//Once the server is done changing the agent state to 'Ready' we will get another event.
+				if(hasCalledInitiateTransfer) {
+					consultConnId = callId;
+				}
+				//endregion
+		
+			} if(callState == "Established") {
+				//region Established
+				//When the call state is 'Established' this means that the call is in progress.
+				//Here we check if this event if from answering the consult call.
+				if(hasActivatedChannels && parentConnId == null) {
+					console.log("Found established call: " + callId);
+					console.log("Initiating transfer...");
+					parentConnId = callId;
+					await initiateTransfer(voiceApi, callId, consultAgentNumber);
+					hasCalledInitiateTransfer = true;
+				}
+		
+				if(hasCalledInitiateTransfer && callId == consultConnId) {
+					console.log("Answered");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+		
+			} else if(callState == "Held") {
+				//region Held
+				//The call state is changed to 'Held' when we hold the call. 
+		
+				if(hasCalledInitiateTransfer && callId == parentConnId) {
+					console.log("Held");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+			}
+	
+			if(callState == "Held" || callState == "Established") {
+				if(actionsCompleted == 2) {
+					console.log("Transfer initiated");
+					console.log("Completing transfer...");
+					await completeTransfer(voiceApi, callId, parentConnId);
+					hasCalledCompleteTransfer = true;
+				}
+			}
+	
+			if(callState == "Released") {
+				//region Released
+				//The call state is changed to 'Released' when the call is ended.
+				if(hasCalledCompleteTransfer && (callId == parentConnId || callId == consultConnId)) {
+					console.log("Released");
+					console.log("CallId: " + callId + ", State: " + callState + ", Capabilities: " + capabilities);
+					actionsCompleted ++;
+				}
+				//endregion
+		
+				if(actionsCompleted == 4) {
+					console.log("Transfer complete");
+					//region Finishing up
+					//Now that the server is done transferring calls we can disconnect CometD and logout.
+					
+					await disconnectAndLogout(cometD, sessionApi);
+					console.log("done");
+					//endregion
+				}
+		
+			}
+	
+		} else if(message.data.messageType == "DnStateChanged") {
+			const agentState = message.data.dn.agentState;
 			if(!hasActivatedChannels) {
-				
-				if(message.data.dn.agentState == "NotReady" ) {
+				if(agentState == "NotReady" || agentState == "Ready") {
 					console.log("Channels activated");
-					console.log("Setting agent state to 'Ready'...");
-					try {
-						const resp = await voiceApi.setAgentStateReady();
-						if(resp.status.code != 1) {
-							console.error("Cannot set agent state to 'Ready'");
-							console.error("Code: " + resp.status.code);
-						} else {
-							console.log("Agent state set to 'Ready'");
-							console.log("done");
-						}
-						disconnectAndLogout(cometD, sessionApi);
-				
-					} catch(err) {
-						console.error("Cannot set agent state to 'Ready'");
-						console.log(err);
-						disconnectAndLogout(cometD, sessionApi);
-					}
+					console.log("Looking for established call...");
 			
 					hasActivatedChannels = true;
 				}
 			}
+		} catch(err) {
+			if(err.response) console.error(err.response.text);
+			else console.error(err);
 			
-			if(message.data.dn.agentState == "Ready" ) {
-				console.log("Agent state is 'Ready'");
-				
-				await disconnectAndLogout(cometD, sessionApi);
-				console.log("done");
-			}
-			//endregion
+			disconnectAndLogout(cometD, sessionApi);
 		}
+	};
 		
-	}
+}
+
+function initiateTransfer(voiceApi, callId, destination, errorCallback) {
+	//region Initiating Transfer
+	//Initiate transfer to a destination number using the voice api.
+	return voiceApi.initiateTransfer(callId, {
+		data: {
+			destination: destination
+		}
+	});
 	//endregion
 }
 
+function completeTransfer(voiceApi, callId, parentConnId) {
+	//region Completing Transfer
+	//Complete the transfer using the parent conn id and the voice api.
+	return voiceApi.completeTransfer(callId, {
+		data: {
+			parentConnId: parentConnId
+		}
+	});
+	//endregion
+}
 
 async function disconnectAndLogout(cometD, sessionApi) {
 	//region Disconnect CometD and Logout Workspace
@@ -266,5 +349,6 @@ async function disconnectAndLogout(cometD, sessionApi) {
 	}
 	//endregion
 }
+
 
 main();

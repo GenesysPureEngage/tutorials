@@ -1,0 +1,5 @@
+title: Search for Targets using the Workspace API
+description: This example shows how to search for a target given a certain key word using the targets API and then call them using the voice API.
+categories: 
+  - workspace
+displayName: Node.Js

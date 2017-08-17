@@ -23,4 +23,3 @@ dependencies {
     compile 'com.squareup.okhttp:okhttp:2.7.5'
 }
 
-
