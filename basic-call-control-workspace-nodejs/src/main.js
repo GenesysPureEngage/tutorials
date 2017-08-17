@@ -27,7 +27,7 @@ async function main() {
 	//endregion	
       let call = msg.call;
       switch (call.state) {
-        // region Answer call
+        //region Answer call
         // When a ringing call is detected, answer it.
         case 'Ringing':
           console.log('Answering call...');
