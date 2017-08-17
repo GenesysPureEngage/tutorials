@@ -10,10 +10,8 @@
   ],
   "contributors": [],
   "dependencies": {
-    "cometd": "3.1.2",
-    "cometd-nodejs-client": "1.0.1",
-    "genesys-authorization-client-js": "1.0.29",
-    "genesys-workspace-client-js": "1.0.68"
+    "yargs": "^8.0.2",
+    "genesys-workspace-client-js": "^1.0.84"
   },
   "main": "src/main.js"
 }
