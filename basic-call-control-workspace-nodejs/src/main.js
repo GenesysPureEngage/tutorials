@@ -18,7 +18,7 @@ let api = new WorkspaceApi(argv);
 let callHasBeenHeld = false;
 
 async function main() {
-	try {
+  try {
     
     // region Register event handlers
     // Register event handlers to get notifications of call and dn state changes and implement the automated sequence
