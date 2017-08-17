@@ -21,7 +21,7 @@ let callHasBeenHeld = false;
 async function main() {
   try {
     
-    // region Register event handlers
+    //region Register event handlers
     // Register event handlers to get notifications of call and dn state changes and implement the automated sequence
     api.on('CallStateChanged', async msg => {
 	//endregion	
@@ -35,7 +35,7 @@ async function main() {
           break;
 		//endregion  
 
-        // region Handle established state
+        //region Handle established state
         // The first time we see an established call it will be placed on hold. The second time, it is released.
         case 'Established':
           if (!callHasBeenHeld) {
@@ -49,7 +49,7 @@ async function main() {
           break;
 		//endregion  
 
-        // region Handle held call
+        //region Handle held call
         // When we see a held call, retrieve it
         case 'Held':
           console.log('Retrieving call...');
@@ -57,7 +57,7 @@ async function main() {
           break;
 		//endregion  
 
-        // region Handle released
+        //region Handle released
         // When we see a released call, set the agent state to ACW
         case 'Released':
           console.log('Setting agent notReady w/ ACW...');
@@ -69,7 +69,7 @@ async function main() {
 
     api.on('DnStateChanged', async msg => {
       let dn = msg.dn;
-      // region Handle DN state change
+      //region Handle DN state change
       // When the DN workMode changes to AfterCallWork the sequence is over and we can exit.
       console.log(`Dn updated - number [${dn.number}] state [${dn.agentState}] workMode [${dn.agentWorkMode}]...`);
       if (dn.agentWorkMode === 'AfterCallWork') {
@@ -78,7 +78,7 @@ async function main() {
 	  //endregion
     });
 
-    // region Initialize the API and activate channels
+    //region Initialize the API and activate channels
     // Initialize the API and activate channels
     console.log('Initializing API...');
     await api.initialize();
@@ -86,7 +86,7 @@ async function main() {
     await api.activateChannels(api.user.employeeId, api.user.agentLogin);
 	//endregion
 
-    // region Wait for an inbound call
+    //region Wait for an inbound call
     // The sample waits and reacts to an inbound call to perform the automated sequence.
     console.log('Waiting for an inbound call...');
   } catch (e) {
