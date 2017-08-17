@@ -16,6 +16,7 @@ const argv = require('yargs').argv
 //Create the api object passing the parsed command line arguments.
 let api = new WorkspaceApi(argv);
 let callHasBeenHeld = false;
+//endregion
 
 async function main() {
   try {
@@ -23,6 +24,7 @@ async function main() {
     // region Register event handlers
     // Register event handlers to get notifications of call and dn state changes and implement the automated sequence
     api.on('CallStateChanged', async msg => {
+	//endregion	
       let call = msg.call;
       switch (call.state) {
         // region Answer call
@@ -31,6 +33,7 @@ async function main() {
           console.log('Answering call...');
           await api.voice.answerCall(call.id);
           break;
+		//endregion  
 
         // region Handle established state
         // The first time we see an established call it will be placed on hold. The second time, it is released.
@@ -44,6 +47,7 @@ async function main() {
             await api.voice.releaseCall(call.id);
           }
           break;
+		//endregion  
 
         // region Handle held call
         // When we see a held call, retrieve it
@@ -51,6 +55,7 @@ async function main() {
           console.log('Retrieving call...');
           await api.voice.retrieveCall(call.id);
           break;
+		//endregion  
 
         // region Handle released
         // When we see a released call, set the agent state to ACW
@@ -58,6 +63,7 @@ async function main() {
           console.log('Setting agent notReady w/ ACW...');
           await api.voice.notReady('AfterCallWork');
           break;
+		//endregion  
       } 
     });
 
@@ -69,14 +75,16 @@ async function main() {
       if (dn.agentWorkMode === 'AfterCallWork') {
         await api.destroy();
       }
+	  //endregion
     });
 
-    // region Initiaize the API and activate channels
+    // region Initialize the API and activate channels
     // Initialize the API and activate channels
     console.log('Initializing API...');
     await api.initialize();
     console.log('Activating channels...');
     await api.activateChannels(api.user.employeeId, api.user.agentLogin);
+	//endregion
 
     // region Wait for an inbound call
     // The sample waits and reacts to an inbound call to perform the automated sequence.
@@ -84,6 +92,7 @@ async function main() {
   } catch (e) {
     await api.destroy();
   }
+   //endregion
 }
 
 main();
