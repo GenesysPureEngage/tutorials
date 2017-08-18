@@ -11,7 +11,7 @@
   "contributors": [],
   "dependencies": {
     "yargs": "^8.0.2",
-    "genesys-workspace-client-js": "^1.0.84"
+    "genesys-workspace-client-js": "^1.0.87"
   },
   "main": "src/main.js"
 }
