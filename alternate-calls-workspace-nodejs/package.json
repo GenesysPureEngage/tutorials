@@ -12,8 +12,8 @@
   "dependencies": {
     "cometd": "3.1.2",
     "cometd-nodejs-client": "1.0.1",
-    "genesys-authorization-client-js": "1.0.29",
-    "genesys-workspace-client-js": "1.0.68"
+    "genesys-authorization-client-js": "^1.0.42",
+    "genesys-workspace-client-js": "^1.0.68"
   },
   "main": "src/main.js"
 }

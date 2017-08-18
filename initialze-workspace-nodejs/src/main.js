@@ -1,21 +1,10 @@
-const workspace = require('genesys-workspace-client-js');
-const auth = require('genesys-authorization-client-js');
-const url = require('url');
-const Promise = require('promise');
-const cometDLib = require('cometd');
-require('cometd-nodejs-client').adapt();
+/* Will be updated to use new API */
+const WorkspaceApi = require('genesys-workspace-client-js');
+const argv = require('yargs').argv;
 
-//Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
-const argv = process.argv.slice(2);
-const apiKey = argv[0];
-const clientId = argv[1];
-const clientSecret = argv[2];
-const apiUrl = argv[3];
-const username = argv[4];
-const password = argv[5];
-
-const workspaceUrl = `${apiUrl}/workspace/v3`;
-const authUrl = `${apiUrl}`;
+//region Create the api object
+//Create the api object passing the parsed command line arguments.
+let api = new WorkspaceApi(argv);
 
 async function main() {
 	
