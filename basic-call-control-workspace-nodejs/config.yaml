@@ -1,5 +1,5 @@
 title: Basic Call Control using the Workspace API
-description: This example shows you how to answer an incomming call, hold it, retrieve it, and then hang up using CometD events.
+description: This tutorial initializes the API, activates channels for the specified user, and waits for an inbound call. When an inbound call arrives, it will be answered, then the call will be placed on hold and retrieved, and finally released. On the release the the agent will be placed in ACW. After performing this automated sequence the API is cleaned up.
 categories: 
   - workspace
 displayName: Node.Js

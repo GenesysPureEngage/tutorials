@@ -41,8 +41,8 @@ public class Main {
             LoginData loginData = new LoginData();
             loginData.setDomainUsername(username);
             loginData.setPassword(password);
-            ApiResponse<LoginSuccessResponse> loginResp = sessionApi.loginWithHttpInfo(loginData);
-            if (loginResp.getData().getStatus().getCode() != 0) {
+            LoginSuccessResponse loginResp = sessionApi.login(loginData);
+            if (loginResp.getStatus().getCode() != 0) {
                 throw new Exception("Cannot log in");
             }
             //endregion
