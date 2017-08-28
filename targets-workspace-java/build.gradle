@@ -11,14 +11,10 @@ if (!hasProperty('mainClass')) {
 repositories {
     mavenCentral()
 }
- 
+
+
 dependencies {
     testCompile 'junit:junit:4.10'
-    compile 'com.genesys:workspace:1.0.1'
-    compile 'com.genesys:authorization:1.0.1'
-    compile 'org.cometd.java:cometd-api:1.1.5'
-    compile 'org.cometd.java:cometd-java-client:3.1.2'
-    compile 'org.cometd.java:bayeux-api:3.1.2'
-    compile 'org.eclipse.jetty:jetty-client:9.4.6.v20170531'
-    compile 'com.squareup.okhttp:okhttp:2.7.5'
+    compile 'com.genesys:workspace:1.0.11'
+    compile 'com.genesys:authorization:1.0.3'
 }

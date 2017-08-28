@@ -1,278 +1,146 @@
-import com.genesys.common.ApiClient;
-import com.genesys.common.ApiResponse;
-import com.genesys.common.ApiException;
-import com.genesys.workspace.api.SessionApi;
-import com.genesys.workspace.api.VoiceApi;
-import com.genesys.workspace.model.ActivatechannelsData;
-import com.genesys.workspace.model.ApiSuccessResponse;
-import com.genesys.workspace.model.ChannelsData;
+import com.genesys.workspace.WorkspaceApi;
+import com.genesys.workspace.common.WorkspaceApiException;
 
+import com.genesys.workspace.events.CallStateChanged;
+import com.genesys.workspace.events.DnStateChanged;
+import com.genesys.workspace.models.User;
+import com.genesys.workspace.models.Call;
+import com.genesys.workspace.models.CallState;
+import com.genesys.workspace.models.AgentWorkMode;
+import com.genesys.workspace.models.Dn;
 
-import com.genesys.workspace.model.ReadyData;
-import com.genesys.workspace.model.VoicereadyData;
+import com.genesys.internal.authorization.api.AuthenticationApi;
+import com.genesys.internal.common.ApiClient;
+import com.genesys.internal.common.ApiResponse;
+import com.genesys.internal.common.ApiException;
 
-import com.genesys.authorization.api.AuthenticationApi;
-import com.genesys.authorization.model.DefaultOAuth2AccessToken;
-
-import org.cometd.bayeux.Message;
-import org.cometd.bayeux.client.ClientSessionChannel;
-import org.cometd.client.BayeuxClient;
-import org.cometd.client.transport.ClientTransport;
-import org.cometd.client.transport.LongPollingTransport;
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Base64;
-
-import java.net.CookieManager;
+import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
 
 public class Main {
-	
-    //Usage: <apiKey> <clientId> <clientSecret> <apiUrl> <agentUsername> <agentPassword>
-    public static void main(String[] args) {
-        final String apiKey = args[0];
-        final String clientId = args[1];
-        final String clientSecret = args[2];
-        final String apiUrl = args[3];
-        final String username = args[4];
-        final String password = args[5];
-
-        final String workspaceUrl = String.format("%s/workspace/v3", apiUrl);
-        final String authUrl = apiUrl;
-              
-        CookieManager cookieManager = new CookieManager();
-
-        //region Initialize Workspace Client
-        //Create and setup an ApiClient instance with your ApiKey and Workspace API URL.
-        final ApiClient client = new ApiClient();
-        client.setBasePath(workspaceUrl);
-        client.addDefaultHeader("x-api-key", apiKey);
-        
-        client.getHttpClient().setCookieHandler(cookieManager);
-        
-        //region Initialize Authorization Client
-        //Create and setup an ApiClient instance with your ApiKey and Authorization API URL.
-        final ApiClient authClient = new ApiClient();
-        authClient.setBasePath(authUrl);
-        authClient.addDefaultHeader("x-api-key", apiKey);
-        //endregion
-        
-        authClient.getHttpClient().setCookieHandler(cookieManager);
-        
-        try {
-
-            //region Create SessionApi and VoiceApi instances
-            //Creating instances of SessionApi and VoiceApi using the workspace ApiClient which will be used to make api calls.
-            final SessionApi sessionApi = new SessionApi(client);
-            final VoiceApi voiceApi = new VoiceApi(client);
-            
-            //region Create AuthenticationApi instance
-            //Create instance of AuthenticationApi using the authorization ApiClient which will be used to retrieve access token.
-            
-            final AuthenticationApi authApi = new AuthenticationApi(authClient); 
-			
-            //region Oauth2 Authentication
-            //Performing Oauth 2.0 authentication.
-            System.out.println("Retrieving access token...");
-            final String authorization = "Basic " + new String(Base64.getEncoder().encode((clientId + ":" + clientSecret).getBytes()));
-            final DefaultOAuth2AccessToken accessToken = authApi.retrieveToken("password", "scope",  authorization, "application/json", "external_api_client", username, password);
-            if(accessToken == null || accessToken.getAccessToken() == null) {
-                throw new Exception("Could not retrieve token");
-            }
-			
-            System.out.println("Initializing workspace...");
-            final ApiSuccessResponse response = sessionApi.initializeWorkspace("", "", "Bearer " + accessToken.getAccessToken());
-            if(response.getStatus().getCode() != 1) {
-                throw new Exception("Cannot initialize workspace");
-            }
-            
-            System.out.println("Got workspace session id");
-            
-            //region Creating HttpClient
-            //Conifuring a Jetty HttpClient which will be used for CometD.
-            final SslContextFactory sslContextFactory = new SslContextFactory();
-			
-			final HttpClient httpClient = new HttpClient(sslContextFactory);
-			httpClient.setCookieStore(cookieManager.getCookieStore());
-			httpClient.start();
-			
-			
-			//region Creating BayeuxClient (CometD Client) and Making CometD handshake
-			//Here we configure CometD using long polling transport and making sure the api key is included in headers. The BayeuxClient instance is created and used to make the CometD handshake.
-			ClientTransport transport = new LongPollingTransport(new HashMap(), httpClient) {
-				@Override protected void customize(Request request) {
-					request.header("x-api-key", apiKey);
-				}
-			};
-			
-			final BayeuxClient bayeuxClient = new BayeuxClient(workspaceUrl + "/notifications", transport);
-			
-			bayeuxClient.handshake((ClientSessionChannel handshakeChannel, Message handshakeMessage) -> {
-				
-				if(handshakeMessage.isSuccessful()) {
-					//region Subscribing to Initialization Channel
-					//Once the handshake is successful we can subscribe to a CometD channels to get events. 
-					//Here we subscribe to initialization channel to get 'initializationComplete' event.
-					bayeuxClient.getChannel("/workspace/v3/initialization").subscribe(new  ClientSessionChannel.MessageListener() {
-						
-						@Override public void onMessage(ClientSessionChannel channel, Message message) {
-							
-							Map<String, Object> messageData = message.getDataAsMap();
-							//region Workspace Initialization Complete Event
-							//When the server is done initializing workspace it will send a 'WorkspaceInitializationComplete' event containing the user data.
-							if(messageData.get("messageType").equals("WorkspaceInitializationComplete")) {
-								System.out.println("Workspace initialized");
-								//region Getting User Data
-								//The user data is stored in messageData -> data -> user as a map.
-								Map<String, Object> data = (Map<String, Object>) messageData.get("data");
-								Map<String, Object> user = (Map<String, Object>) data.get("user");
-								
-								String agentLogin = (String) user.get("agentLogin");
-								String employeeId = (String) user.get("employeeId");
-								
-								System.out.println("Activating channels...");
-								activateChannels(sessionApi, employeeId, agentLogin);
-							}
-						}
-						
-					}, (ClientSessionChannel channel, Message message) -> {
-						//region Subscription Event
-						//If the CometD subscription is unsuccessful we end the program.
-						if(message.isSuccessful()) {
-							System.out.println("Subscribed to initialization events");
-						} else {
-							System.out.println("Initialization subscription failed");
-							System.exit(1);
-						}
-						//endregion
-					});
-					
-					//region Subscribing is Voice Channel
-					//Here we subscribe to voice channel to get call events.  	
-					bayeuxClient.getChannel("/workspace/v3/voice").subscribe(new  ClientSessionChannel.MessageListener() {
-						
-						private boolean hasActivatedChannels = false;
-						
-						@Override public void onMessage(ClientSessionChannel channel, Message message) {
-							//region Receiving Events
-							//Here CometD events are handled. The Message object contains data that is stored as a map. Getting the 'messageType' will tell us the type of message.
-							Map<String, Object> messageData = (Map<String, Object>) message.getDataAsMap();
-						
-							if(messageData.get("messageType").equals("DnStateChanged")) {
-							
-								Map<String, Object> dn = (Map<String, Object>) messageData.get("dn");
-							
-								//region Handle Different State changes
-								//When the server is done activating channels, it will send a 'DnStateChanged' message with the agent state being 'NotReady'.
-								//Once the server is done changing the agent state to 'Ready' we will get another event.
-								if(!hasActivatedChannels) {
-									
-									if(dn.get("agentState").equals("NotReady")) {
-									
-										System.out.println("Channels activated");
-										System.out.println("Changing agent state...");
-									
-										makeAgentReady(voiceApi);
-										hasActivatedChannels = true;
-									}
-								} else {
-									
-									if(dn.get("agentState").equals("Ready")) {
-										System.out.println("Agent state changed to Ready");
-										//region Finishing up
-										//Now that the agent state is changed to 'Ready' to program is done so we can disconnect CometD and logout.
-										disconnectAndLogout(bayeuxClient, sessionApi);
-								
-										System.out.println("done");
-										System.exit(0);
-										//endregion
-									}
-								}
-							}
-						
-						}
-					}, (ClientSessionChannel channel, Message message) -> {
-						//region Subscription Event
-						//If the CometD subscription is unsuccessful we end the program.
-						if(message.isSuccessful()) {
-							System.out.println("Subscribed to voice events");
-						} else {
-							System.out.println("Voice subscription failed");
-							System.exit(1);
-						}
-						//endregion
-					});
-					
-					
-				} else {
-					System.err.println("Handshake failed");
-				}
-			});
-            
-            
-        } catch(Exception ex) {
-            System.err.println(ex);
-            System.exit(1);
-        }
-    }
-    
-    public static void activateChannels(SessionApi sessionApi, String employeeId, String agentLogin) {
+	public static void main(String[] args) {
 		
-		//region Activate Channels
-		//Activating channels for the user using employee ID and agent login.
 		try {
+			//region Parsing options
+			//Here we parse the input params (ex: --baseUrl=<base url>)
 			
-			ActivatechannelsData data = new ActivatechannelsData();
-			data.setAgentId(employeeId);
-			data.setDn(agentLogin);
-			ChannelsData channelsData = new ChannelsData();
-			channelsData.data(data);
-			ApiSuccessResponse response = sessionApi.activateChannels(channelsData);
-			if(response.getStatus().getCode() != 0) {
-				System.err.println("Cannot activate channels");
+			final Map<String, String> options = Arrays.stream(args).filter(arg -> arg.startsWith("--"))
+				.map(arg -> arg.substring(2).split("=",2))
+				.collect(Collectors.toMap(arg -> arg[0].trim(), arg -> arg[1].trim()));
+			if(!options.containsKey("debugEnabled")) options.put("debugEnabled", "false");
+			
+			new Main(options);
+			//endregion
+			
+		} catch(Exception e) {
+			System.err.println("Invalid args");
+			System.err.println(e);
+		}
+		
+	}
+	
+	boolean hasCallBeenHeld = false;
+	CompletableFuture future = new CompletableFuture();
+	WorkspaceApi api;
+	
+	
+	public Main(Map<String, String> options) {
+		//region creating WorkspaceApi
+		//Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
+		api = new WorkspaceApi(
+				options.get("apiKey"),
+				options.get("baseUrl"),
+				Boolean.parseBoolean(options.get("debugEnabled"))
+		);
+		//endregion
+		
+		//region Registering Event Handlers
+		//Here we register Call and Dn event handlers.
+		
+		api.voice().addDnEventListener((DnStateChanged msg) -> {
+			try {
+				Dn dn = msg.getDn();
+				switch(dn.getAgentState()) {
+					case READY:
+						System.out.println("Agent state is ready");
+						future.complete(null);
+						break;
+				
+					case NOT_READY:
+						System.out.println("Agent state is not ready");
+						System.out.println("Setting state to ready...");
+						api.voice().setAgentReady();
+						break;
+				}
+			} catch(WorkspaceApiException ex) {
+				System.err.println("Exception:" + ex);
+				future.completeExceptionally(ex);
+			}
+		});
+		//endregion
+		
+		try {
+			System.out.println("Getting auth code...");
+			String authCode = getAuthCode(
+				options.get("baseUrl"), 
+				options.get("apiKey"),
+				options.get("clientId"),
+				options.get("username"),
+				options.get("password")
+			);
+			if(Boolean.parseBoolean(options.get("debugEnabled"))) 
+				System.out.println("Auth code is: [" + authCode + "]");
+			
+			System.out.println("Initializing API...");
+			User user = api.initialize(authCode, "http://localhost").get();
+			
+			System.out.println("Activating channels...");
+			api.activateChannels(user.getAgentId(), user.getAgentId());
+			
+			future.get();
+			
+			System.out.println("done");
+			api.destroy();
+			
+		} catch(Exception ex) {
+			System.err.println("Error: " + ex);
+			
+			try {
+				api.destroy();
+			} catch(WorkspaceApiException destroyEx) {
+				System.err.println("Could not destroy API: " + destroyEx);
 				System.exit(1);
 			}
-			
-		} catch(ApiException ex) {
-			System.err.println("Cannot activate channels");
-			System.err.println(ex);
-			System.exit(1);
 		}
-		//endregion
+		
 	}
-    
-    public static void makeAgentReady(VoiceApi voiceApi) {
-        //region Change agent state
-        //Changing agent state to ready
-        try {
-            VoicereadyData data = new VoicereadyData();
-            ApiSuccessResponse response = voiceApi.setAgentStateReady(new ReadyData().data(data));
-            if (response.getStatus().getCode() != 1) {
-                System.err.println("Cannot change agent state");
-            }
-        } catch (ApiException ex) {
-            System.err.println("Cannot make agent ready");
-            System.err.println(ex);
-            System.exit(1);
-        }
-    }
-
-    public static void disconnectAndLogout(BayeuxClient bayeuxClient, SessionApi sessionApi) {
-    	//region Disconnecting and Logging Out
-		//Using the BayeuxClient and SessionApi to disconnect CometD and logout of the workspace session.
-		bayeuxClient.disconnect();
+	
+	public static String getAuthCode(String baseUrl, String apiKey, String clientId, String username, String password) throws ApiException {
+		
+		final ApiClient authClient = new ApiClient();
+		
+		authClient.setBasePath(baseUrl + "/auth/v3");
+		authClient.addDefaultHeader("x-api-key", apiKey);
+		authClient.getHttpClient().setFollowRedirects(false);
+		
+		final AuthenticationApi authApi = new AuthenticationApi(authClient); 
+		
+		final String authorization = "Basic " + new String(Base64.getEncoder().encode( (username + ":" + password).getBytes()));
 		
 		try {
-			sessionApi.logout();
+			final ApiResponse<Void> response = authApi.authorizeWithHttpInfo("code", "http://localhost", clientId, authorization, null);
 		} catch(ApiException ex) {
-			System.err.println("Cannot log out");
-			System.err.println(ex);
-			System.exit(1);
+			String location = ex.getResponseHeaders().get("Location").get(0);
+			String code = Arrays.stream(location.split("\\?")[1].split("&")).filter(q -> q.startsWith("code=")).findFirst().get().split("=")[1];
+			return code;
+			
 		}
-		//endregion
-    }
+		
+		
+		return null;
+	}
+	
 }
-
