@@ -1,4 +1,84 @@
-/* Will be updated to use new API */
+const WorkspaceApi = require('genesys-workspace-client-js');
+const argv = {};
+const rl = require('readline').createInterface({
+	input: process.stdin,
+	output: process.stdout
+});
+
+function prompt(text) {
+	return new Promise((resolve, reject) => {
+		rl.question(text, resp => resolve(resp));
+	});
+}
+
+
+
+async function main() {
+	console.log("This tutorial steps you through setting up workspace client.");
+	console.log("When running other workspace tutorials the propted inputs in this tutorial \
+should be inputed as arguments (ex: --apiKey=<your api key>)");
+	argv.apiKey = await prompt("apiKey:\n");
+	argv.baseUrl = await prompt("baseUrl:\n");
+	argv.debugEnabled = await prompt("debugEnabled \n(this tells the WorkspaceApi whether it should log errors and other activity or not):\n");
+	
+	//region Create the api object
+	//Create the api object passing the parsed command line arguments.
+	let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+	//endregion
+	console.log("WorkspaceApi object created");
+	
+	argv.username = await prompt("username:\n");
+	argv.password = await prompt("password:\n");
+	argv.clientId = await prompt("clientId:\n");
+	
+	try {
+		console.log("Performing Oauth 2.0...");
+		console.log("Getting access code...");
+		const code = await getAuthCode();
+        //region Initiaize the API and activate channels
+        //Initialize the API and activate channels
+        console.log('Initializing API...');
+        await api.initialize({code: code, redirectUri: 'http://localhost'});
+        
+		console.log('The workspace api is now successfully initialized.');
+		console.log('User data: ' + JSON.stringify(api.user, null, 4));
+		api.destroy();
+		//endregion
+		rl.close();
+	} catch(err) {
+		await api.destroy();
+		rl.close();
+	}
+}
+
+async function getAuthCode() {
+	
+	let requestOptions = {
+	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
+	  headers: {
+		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
+		'x-api-key': argv.apiKey
+	  },
+	  resolveWithFullResponse: true,
+	  simple: false,
+	  followRedirect: false
+	}
+	
+	let response = await require('request-promise-native')(requestOptions);
+	if (!response.headers['location']) {
+	  throw {error: 'No Location Header', response: response};
+	}
+	
+	const location = require('url').parse(response.headers['location'], true);
+	let code = location.query.code;
+	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
+	
+	return code;
+}
+
+main();
+
+/*
 const WorkspaceApi = require('genesys-workspace-client-js');
 const argv = require('yargs').argv;
 
@@ -175,3 +255,4 @@ async function disconnectAndLogout(cometD, sessionApi) {
 
 
 main();
+*/
