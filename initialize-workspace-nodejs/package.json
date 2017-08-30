@@ -1,0 +1,19 @@
+{
+  "name": "initialize-workspace-nodejs",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "contributors": [],
+  "dependencies": {
+    "genesys-authorization-client-js": "1.0.55",
+    "genesys-workspace-client-js": "1.0.95"
+  },
+  "scripts": {
+    "start": "node src/main.js"
+  }
+}
