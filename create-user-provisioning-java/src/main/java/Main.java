@@ -1,22 +1,19 @@
 import com.genesys.common.ApiClient;
-import com.genesys.common.ApiResponse;
 import com.genesys.provisioning.api.SessionApi;
 import com.genesys.provisioning.api.UsersApi;
 import com.genesys.provisioning.model.AddUserData;
 import com.genesys.provisioning.model.ApiSuccessResponse;
 import com.genesys.provisioning.model.LoginData;
 import com.genesys.provisioning.model.LoginSuccessResponse;
-
 import java.net.CookieManager;
 import java.util.Arrays;
 
 public class Main {
-    //Usage: <apiKey> <username> <password> <apiUrl>
     public static void main(String[] args) {
-        final String apiKey = args[0];
-        final String username = args[1];
-        final String password = args[2];
-        final String apiUrl = args[3];
+        final String apiKey = "<apiKey>";
+        final String username = "<username>";
+        final String password = "<password>";
+        final String apiUrl = "<apiUrl>";
         
         final String provisioningUrl = String.format("%s/provisioning/v3", apiUrl);
         
@@ -55,19 +52,18 @@ public class Main {
             //region Describing and creating a user
             //Filling necessary information and creating a user using UsersApi instance
             AddUserData usersData = new AddUserData();
-            usersData.setUserName("Username");
-            usersData.setPassword("Password123");
-            usersData.setFirstName("FirstName");
-            usersData.setLastName("LastName");
-            usersData.setAccessGroups(Arrays.asList("Users"));
-            usersData.setAgentGroups(Arrays.asList("tutorials"));
+            usersData.setUserName("<agentUsername>");
+            usersData.setPassword("<agentPassword>");
+            usersData.setFirstName("<agentFirstName>");
+            usersData.setLastName("<agentLastName>");
+            usersData.setAccessGroups(Arrays.asList("<agentAccessGroup>"));
             ApiSuccessResponse resp = usersApi.addUser(usersData);
             if (resp.getStatus().getCode().equals(0)) {
                 System.out.println("user created");
             } 
             else {
                 System.err.println(resp);
-                System.err.println("Cannot create user");
+                System.err.println("Cannot create agent");
             }
             //endregion
 
@@ -77,10 +73,7 @@ public class Main {
             //endregion
         } 
         catch (Exception ex) {
-        	ex.printStackTrace();
             System.err.println(ex);
         }
     }
 }
-
-
