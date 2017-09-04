@@ -9,7 +9,7 @@ import java.net.CookieManager;
 import java.util.Arrays;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         final String apiKey = "<apiKey>";
         final String username = "<username>";
         final String password = "<password>";
@@ -27,53 +27,48 @@ public class Main {
         client.setDebugging(true);
         //endregion
 
-        try {
-            //region Create SessionApi instance
-            //Creating instance of SessionApi using the ApiClient.
-            final SessionApi sessionApi = new SessionApi(client);
-            //endregion
+        //region Create SessionApi instance
+        //Creating instance of SessionApi using the ApiClient.
+        final SessionApi sessionApi = new SessionApi(client);
+        //endregion
 
-            //region Logging in Provisioning API
-            //Logging in using our username and password
-            LoginData loginData = new LoginData();
-            loginData.setDomainUsername(username);
-            loginData.setPassword(password);
-            LoginSuccessResponse loginResp = sessionApi.login(loginData);
-            if (loginResp.getStatus().getCode() != 0) {
-                throw new Exception("Cannot log in");
-            }
-            //endregion
-			
-            //region Creating UsersApi instance
-            //Creating instance of UsersApi using the ApiClient
-            final UsersApi usersApi = new UsersApi(client);
-            //endregion
-
-            //region Describing and creating a user
-            //Filling necessary information and creating a user using UsersApi instance
-            AddUserData usersData = new AddUserData();
-            usersData.setUserName("<agentUsername>");
-            usersData.setPassword("<agentPassword>");
-            usersData.setFirstName("<agentFirstName>");
-            usersData.setLastName("<agentLastName>");
-            usersData.setAccessGroups(Arrays.asList("<agentAccessGroup>"));
-            ApiSuccessResponse resp = usersApi.addUser(usersData);
-            if (resp.getStatus().getCode().equals(0)) {
-                System.out.println("user created");
-            } 
-            else {
-                System.err.println(resp);
-                System.err.println("Cannot create agent");
-            }
-            //endregion
-
-            //region Logging out
-            //Ending our Provisioning API session
-            sessionApi.logout();
-            //endregion
-        } 
-        catch (Exception ex) {
-            System.err.println(ex);
+        //region Logging in Provisioning API
+        //Logging in using our username and password
+        LoginData loginData = new LoginData();
+        loginData.setDomainUsername(username);
+        loginData.setPassword(password);
+        LoginSuccessResponse loginResp = sessionApi.login(loginData);
+        if (loginResp.getStatus().getCode() != 0) {
+            throw new Exception("Cannot log in");
         }
+        //endregion
+
+        //region Creating UsersApi instance
+        //Creating instance of UsersApi using the ApiClient
+        final UsersApi usersApi = new UsersApi(client);
+        //endregion
+
+        //region Describing and creating a user
+        //Filling necessary information and creating a user using UsersApi instance
+        AddUserData usersData = new AddUserData();
+        usersData.setUserName("<agentUsername>");
+        usersData.setPassword("<agentPassword>");
+        usersData.setFirstName("<agentFirstName>");
+        usersData.setLastName("<agentLastName>");
+        usersData.setAccessGroups(Arrays.asList("<agentAccessGroup>"));
+        ApiSuccessResponse resp = usersApi.addUser(usersData);
+        if (resp.getStatus().getCode().equals(0)) {
+            System.out.println("user created");
+        } 
+        else {
+            System.err.println(resp);
+            System.err.println("Cannot create agent");
+        }
+        //endregion
+
+        //region Logging out
+        //Ending our Provisioning API session
+        sessionApi.logout();
+        //endregion
     }
 }

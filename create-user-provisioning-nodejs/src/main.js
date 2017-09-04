@@ -28,10 +28,10 @@ sessionApi.login({
     }
     
     return resp.data;
-}).then(data => {
+}).then(resp => {
     //region Obtaining Provisioning API Session
     //Obtaining sessionId and setting PROVISIONING_SESSIONID cookie to the client
-    const sessionId = resp.data.sessionId;
+    const sessionId = resp.sessionId;
     provisioningClient.defaultHeaders.Cookie = `PROVISIONING_SESSIONID=${sessionId};`;
 
     //region Creating UsersApi instance
