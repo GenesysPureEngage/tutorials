@@ -6,7 +6,7 @@ import com.genesys.workspace.models.User;
 import java.util.Base64;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         String apiKey = "<apiKey>";
         String apiUrl = "<apiUrl>";
         
@@ -23,24 +23,19 @@ public class Main {
 
         AuthenticationApi authApi = new AuthenticationApi(authClient); 
         
-        try {
-            String agentUsername = "<agentUsername>";
-            String agentPassword = "<agentPassword>";
-            String clientId = "<clientId>";
-            String clientSecret = "<clientSecret>";
-            
-            String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
-            DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, agentUsername, agentPassword);
+        String agentUsername = "<agentUsername>";
+        String agentPassword = "<agentPassword>";
+        String clientId = "<clientId>";
+        String clientSecret = "<clientSecret>";
 
-            User user = api.initialize(resp.getAccessToken()).get();
-            System.out.println("The workspace api is now successfully initialized");
-            System.out.println("User data: " + user); 
+        String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
+        DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, agentUsername, agentPassword);
+
+        User user = api.initialize(resp.getAccessToken()).get();
+        System.out.println("The workspace api is now successfully initialized");
+        System.out.println("User data: " + user); 
 
 
-            api.destroy();
-        }
-        catch(Exception ex) {
-            System.out.println(ex);
-        }
+        api.destroy();
    }
 }

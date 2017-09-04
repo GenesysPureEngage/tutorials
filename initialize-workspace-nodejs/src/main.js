@@ -20,7 +20,7 @@ const agentPassword = "<agentPassword>";
 const clientId = "<clientId>";
 const clientSecret = "<clientSecret>";
 
-const api = new authorization.AuthenticationApi(client);
+const authApi = new authorization.AuthenticationApi(client);
 const opts = {
     authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
     clientId: clientId,
@@ -29,7 +29,7 @@ const opts = {
     password: agentPassword
 };
     
-api.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
     const data = resp.response.body;
     const accessToken = data.access_token;
     if(!accessToken) {
