@@ -13,7 +13,6 @@ const client = new authorization.ApiClient();
 client.basePath = `${apiUrl}/auth/v3`;
 client.defaultHeaders = {'x-api-key': apiKey};
 client.enableCookies = true;
-const authApi = new authorization.AuthenticationApi(client);
 
 const agentUsername = "<agentUsername>";
 const agentPassword = "<agentPassword>";
