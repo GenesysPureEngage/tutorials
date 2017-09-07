@@ -38,9 +38,10 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
     return accessToken;
 }).then(token => {
     //region Initiaize the API and activate channels
-    //Initialize the API and activate channels
+    //Initialize the API 
     workspaceApi.initialize({token: token}).then(data => {
-        console.log(data);
+        console.log(workspaceApi.user);
+        console.log('done');
         workspaceApi.destroy();
     });
 }).catch(console.error);
