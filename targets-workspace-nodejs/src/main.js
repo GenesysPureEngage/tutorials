@@ -1,94 +1,67 @@
-const WorkspaceApi = require('genesys-workspace-client-js');
-const argv = require('yargs').argv;
+const workspace = require('genesys-workspace-client-js');
+const authorization = require('genesys-authorization-client-js');
 
-if(!argv.searchTerm) {
-	console.log("This tutorial requires argument: 'searchTerm'");
-	process.exit();
-}
+const apiKey = "<apiKey>";
+const apiUrl = "<apiUrl>";
 
 //region Create the api object
 //Create the api object passing the parsed command line arguments.
-let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
-async function main() {
-	try {
-    	
-		const code = await getAuthCode();
-        //region Initiaize the API and activate channels
-        //Initialize the API and activate channels
-        console.log('Initializing API...');
-        await api.initialize({code: code, redirectUri: 'http://localhost'});
-		console.log('Activating channels...');
-		await api.activateChannels(api.user.employeeId, api.user.agentLogin);
-    	//endregion
-    	
-    	//region Searching for Targets
-    	//Getting targets with the specified searchTerm using the API.
-    	const targets = await api.targets.search(argv.searchTerm);
-    	//endregion
-    	
-    	if(targets.length == 0) {
-    		throw 'Search came up empty';
-    		
-    	} else {
-    		//region Printing the userNames.
-    		//Printing the userNames of the targets found and then printing the userName of the first target.
-    		console.log(`Found targets: [${targets.map(t => t.userName).join()}]`);
-    		console.log(`Calling target: ${targets[0].userName}`);
-    		//endregion
-    		
-    		//region Getting phone number
-    		//Getting the phone number of the first target if it exists, if not we throw an error.
-    		let phoneNumber;
-    		try {
-    			phoneNumber = targets[0].availability.channels[0].phoneNumber;
-    		} catch(err) {
-    			throw 'No Phone Number';
-    		}
-    		//endregion
-    		
-    		//region Calling Number
-    		//Printing the phone number found and them using the API to call that number
-    		console.log(`Calling number: [${phoneNumber}]...`);
-    		
-    		await api.voice.makeCall(phoneNumber);
-    		
-    		console.log('done');
-    		api.destroy();
-    		//endregion
-    	}
-    	
-    	
-	} catch(err) {
-		console.error(err);
-		api.destroy();
-	}
-}
+const client = new authorization.ApiClient();
+client.basePath = `${apiUrl}/auth/v3`;
+client.defaultHeaders = {'x-api-key': apiKey};
+client.enableCookies = true;
 
-async function getAuthCode() {
-	
-	let requestOptions = {
-	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
-	  headers: {
-		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
-		'x-api-key': argv.apiKey
-	  },
-	  resolveWithFullResponse: true,
-	  simple: false,
-	  followRedirect: false
-	}
+const agentUsername = "<agentUsername>";
+const agentPassword = "<agentPassword>";
+const clientId = "<clientId>";
+const clientSecret = "<clientSecret>";
 
-	let response = await require('request-promise-native')(requestOptions);
-	if (!response.headers['location']) {
-	  throw {error: 'No Location Header', response: response};
-	}
-
-	const location = require('url').parse(response.headers['location'], true);
-	let code = location.query.code;
-	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
-
-	return code;
-}
-
-main();
+const authApi = new authorization.AuthenticationApi(client);
+const opts = {
+    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
+    clientId: clientId,
+    scope: '*',
+    username: agentUsername,
+    password: agentPassword
+};
+    
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+    const data = resp.response.body;
+    const accessToken = data.access_token;
+    if(!accessToken) {
+        throw new Error('Cannot get access token');
+    }
+    
+    return accessToken;
+}).then(token => {
+    //region Initiaize the API and activate channels
+    //Initialize the API and activate channels
+    return workspaceApi.initialize({token: token}).then(() => {
+        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin)
+    });
+}).then(() => {
+    
+    //region Searching for Targets
+    //Getting targets with the specified searchTerm using the API.
+    return workspaceApi.targets.search("<searchTerm>");
+    //endregion
+})
+.then(targets => {
+    if(targets.length === 0) {
+        throw 'Search came up empty';
+    } 
+    else {
+        //region Printing targets
+        //Printing details of the targets found
+        targets.forEach(target => {
+            console.log(target);
+            console.log(`Name: ${target.name}`);
+            console.log(`PhoneNumber: ${target.number}`);
+        });
+    }
+}).catch(console.error).then(() => {
+    workspaceApi.destroy();
+});
