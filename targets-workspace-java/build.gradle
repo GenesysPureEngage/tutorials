@@ -18,3 +18,11 @@ dependencies {
     compile 'com.genesys:workspace:1.0.12'
     compile 'com.genesys:authorization:1.0.3'
 }
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClass
+    }
+    
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}

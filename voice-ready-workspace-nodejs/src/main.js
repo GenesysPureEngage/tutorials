@@ -1,72 +1,82 @@
-const WorkspaceApi = require('genesys-workspace-client-js');
-const argv = require('yargs').argv;
+const workspace = require('genesys-workspace-client-js');
+const authorization = require('genesys-authorization-client-js');
+
+const apiKey = "<apiKey>";
+const apiUrl = "<apiUrl>";
 
 //region Create the api object
 //Create the api object passing the parsed command line arguments.
-let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
-async function main() {
-	try {
-		//region Register event handlers
-   	    //Register event handlers to get notifications of call and dn state changes and implement the automated sequence
-		api.on('DnStateChanged', async msg => {
-			
-			let dn = msg.dn;
-			switch (dn.agentState) {
-				//region 'Ready'
-				//If the agent state is ready then the program is done.
-				case 'Ready':
-					console.log("Agent state is 'Ready'");
-					console.log('done');
-					await api.destroy();
-					break;
-				//endregion
-				//region 'NotReady'
-				//If the agent state is 'NotReady' then we set it to 'Ready'.
-				case 'NotReady':
-					console.log("Setting agent state to 'Ready'...");
-					await api.voice.ready();
-				//endregion
-			}
-		});
-		//endregion
-		const code = await getAuthCode();
-        //region Initiaize the API and activate channels
-        //Initialize the API and activate channels
-        console.log('Initializing API...');
-        await api.initialize({code: code, redirectUri: 'http://localhost'});
-		console.log('Activating channels...');
-		await api.activateChannels(api.user.employeeId, api.user.agentLogin);
-		//endregion
-	} catch(err) {
-		await api.destroy();
-	}
-}
+//region Register event handlers
+//Register event handlers to get notifications of call and dn state changes and implement the automated sequence
+workspaceApi.on('DnStateChanged', async msg => {
+    let dn = msg.dn;
+    switch (dn.agentState) {
+        //region 'Ready'
+        //If the agent state is ready then the program is done.
+        case 'Ready':
+            console.log("Agent state is 'Ready'");
+            console.log('done');
+            workspaceApi.destroy();
+            break;
+        //endregion
+        //region 'NotReady'
+        //If the agent state is 'NotReady' then we set it to 'Ready'.
+        case 'NotReady':
+            console.log("Setting agent state to 'Ready'...");
+            workspaceApi.voice.ready();
+        //endregion
+    }
+});
 
-async function getAuthCode() {
-	
-	let requestOptions = {
-	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
-	  headers: {
-		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
-		'x-api-key': argv.apiKey
-	  },
-	  resolveWithFullResponse: true,
-	  simple: false,
-	  followRedirect: false
-	}
-	
-	let response = await require('request-promise-native')(requestOptions);
-	if (!response.headers['location']) {
-	  throw {error: 'No Location Header', response: response};
-	}
+const client = new authorization.ApiClient();
+client.basePath = `${apiUrl}/auth/v3`;
+client.defaultHeaders = {'x-api-key': apiKey};
+client.enableCookies = true;
 
-	const location = require('url').parse(response.headers['location'], true);
-	let code = location.query.code;
-	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
+const agentUsername = "<agentUsername>";
+const agentPassword = "<agentPassword>";
+const clientId = "<clientId>";
+const clientSecret = "<clientSecret>";
 
-	return code;
-}
+const authApi = new authorization.AuthenticationApi(client);
+const opts = {
+    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
+    clientId: clientId,
+    scope: '*',
+    username: agentUsername,
+    password: agentPassword
+};
+    
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+    const data = resp.response.body;
+    const accessToken = data.access_token;
+    if(!accessToken) {
+        throw new Error('Cannot get access token');
+    }
+    
+    return accessToken;
+}).then(token => {
+    //region Initiaize the API and activate channels
+    //Initialize the API and activate channels
+    return workspaceApi.initialize({token: token}).then(() => {
+        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
+    });
+    //endregion
+}).catch(console.error);
 
-main();
+console.log('Waiting for completion...');
+
+
+
+
+
+
+
+
+
+
+
+

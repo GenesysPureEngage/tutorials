@@ -94,9 +94,8 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
 }).then(token => {
     //region Initiaize the API and activate channels
     //Initialize the API and activate channels
-    workspaceApi.initialize({token: token}).then(data => {
-        console.log(data);
-        workspaceApi.destroy();
+    return workspaceApi.initialize({token: token}).then(() => {
+        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
     });
 }).catch(console.error);
 
@@ -104,3 +103,16 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
 //The tutorial waits and reacts to an inbound call to perform the automated sequence.
 console.log('Waiting for an inbound call...');
 //endregion
+
+
+
+
+
+
+
+
+
+
+
+
+

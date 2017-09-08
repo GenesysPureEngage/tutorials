@@ -1,121 +1,97 @@
-const WorkspaceApi = require('genesys-workspace-client-js');
-const argv = require('yargs').argv;
+const workspace = require('genesys-workspace-client-js');
+const authorization = require('genesys-authorization-client-js');
 
-if(!argv.destination) {
-	console.log("This tutorial requires argument: 'destination'");
-	process.exit();
-}
+const apiKey = "<apiKey>";
+const apiUrl = "<apiUrl>";
+const destination = "<agentPhoneNumber3>";
 
 //region Create the api object
 //Create the api object passing the parsed command line arguments.
-let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+let workspaceApi = new workspace(apiKey, apiUrl, false);
 //endregion
 
-async function main() {
-	try {
-    	var parentCall;
-    	var consultCall;
-    	var initiatingTransfer = false;
-    	var completingTransfer = false;
-    	var actionsCompleted = 0;
-    	
-    	//region Register event handler
-    	//Register event handler to get notifications of call state changes.
-    	api.on('CallStateChanged', async msg => {
-    		
-    		try {
-    			let call = msg.call;
-    			if(!initiatingTransfer) {
-					if(!parentCall && call.state == 'Established') {
-						parentCall = call;
-						console.log(`Found established call: [${call.id}]`);
-						console.log('Initiating Transfer...');
-						initiatingTransfer = true;
-						const response = await api.voice.initiateTransfer(call.id, argv.destination + '');
-					}
-    			} else {
-					if(call.state == 'Held' && call.id == parentCall.id) {
-						console.log(`Held call: [${call.id}]`);
-					}
-					if(call.state == 'Dialing') {
-						console.log(`Calling consultant: [${call.id}]`);
-						consultCall = call;
-					}
-					if(consultCall) 
-						if(call.state == 'Established' && call.id == consultCall.id) {
-							console.log(`Consult call answered: [${call.id}]]`);
-							console.log('Completing transfer...');
-							completingTransfer = true;
-							await api.voice.completeTransfer(consultCall.id, parentCall.id);
-						}
-    			}
-    			
-    			if(completingTransfer) {
-    				if(call.state == 'Released' && call.id == consultCall.id) {
-    					console.log(`Consult call released: [${call.id}]`);
-    					
-    					actionsCompleted ++;
-    				}
-    				if(call.state == 'Released' && call.id == parentCall.id) {
-    					console.log(`Parent call released: [${call.id}]`);
-    					
-    					actionsCompleted ++;
-    				}
-    				if(actionsCompleted == 2) {
-    					console.log('Transfer complete');
-    					console.log('done');
-    					await api.destroy();
-    				}
-    			}
-    			
-    		} catch(err) {
-    			console.error(err);
-    			api.destroy();
-    		}
-    	});
-    	//endregion
-		const code = await getAuthCode();
-        //region Initiaize the API and activate channels
-        //Initialize the API and activate channels
-        console.log('Initializing API...');
-        await api.initialize({code: code, redirectUri: 'http://localhost'});
-		console.log('Activating channels...');
-		await api.activateChannels(api.user.employeeId, api.user.agentLogin);
-		
-		//region Wait for an established call
-		//The tutorial waits for an established call so it can initiate transfer
-		console.log('Waiting for an established call...');
-	} catch(err) {
-		console.error(err);
-		api.destroy();
-	}
+let originalCallId;
+let transferedCallId;
+
+//region Register event handler
+//Register event handler to get notifications of call state changes.
+workspaceApi.on('CallStateChanged', msg => {
+    const call = msg.call;
+    const callId = call.id;
+    
+    console.info(`${call.state}: ${callId}`);
+    
+    switch(call.state) {
+        case "Established":
+            if(!originalCallId) {
+                originalCallId = callId;
+                workspaceApi.voice.initiateTransfer(callId, destination);
+            }
+            else if(transferedCallId === callId) {
+                workspaceApi.voice.completeTransfer(transferedCallId, originalCallId);
+            }
+            break;
+        case 'Dialing':
+            transferedCallId = callId;
+            break;
+        case 'Released':
+            console.info('done');
+            process.exit(0);
+            break;
+        case 'Ringing':
+            workspaceApi.voice.answerCall(callId);
+            break;
+    }
+});
+//endregion
 	
-	
-}
+const client = new authorization.ApiClient();
+client.basePath = `${apiUrl}/auth/v3`;
+client.defaultHeaders = {'x-api-key': apiKey};
+client.enableCookies = true;
+const authApi = new authorization.AuthenticationApi(client);
 
-async function getAuthCode() {
-	
-	let requestOptions = {
-	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
-	  headers: {
-		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
-		'x-api-key': argv.apiKey
-	  },
-	  resolveWithFullResponse: true,
-	  simple: false,
-	  followRedirect: false
-	}
+const agentUsername = "<agentUsername2>";
+const agentPassword = "<agentPassword2>";
+const clientId = "<clientId>";
+const clientSecret = "<clientSecret>";
 
-	let response = await require('request-promise-native')(requestOptions);
-	if (!response.headers['location']) {
-	  throw {error: 'No Location Header', response: response};
-	}
+const opts = {
+    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
+    clientId: clientId,
+    scope: '*',
+    username: agentUsername,
+    password: agentPassword
+};
+    
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+    const data = resp.response.body;
+    const accessToken = data.access_token;
+    if(!accessToken) {
+        throw new Error('Cannot get access token');
+    }
+    
+    return accessToken;
+}).then(token => {
+    //region Initiaize the API and activate channels
+    //Initialize the API and activate channels
+    return workspaceApi.initialize({token: token}).then(() => {
+        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
+    });
+    //endregion
+})
+.catch(console.error);
 
-	const location = require('url').parse(response.headers['location'], true);
-	let code = location.query.code;
-	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
 
-	return code;
-}
 
-main();
+
+
+
+
+
+
+
+
+
+
+

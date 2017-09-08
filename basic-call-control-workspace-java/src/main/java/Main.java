@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class Main {
     static boolean hasCallBeenHeld = false;
-    static final CompletableFuture<Boolean> done = new CompletableFuture<Boolean>();
+    static final CompletableFuture done = new CompletableFuture();
     
     public static void main(String[] args) throws Exception {
         //region creating WorkspaceApi
@@ -63,7 +63,7 @@ public class Main {
                 }
             } catch(WorkspaceApiException e) {
                 System.err.println(e);
-                System.exit(1);
+                done.completeExceptionally(e);
             }
         });
 
@@ -71,11 +71,11 @@ public class Main {
                 Dn dn = msg.getDn();
 
                 if (hasCallBeenHeld && AgentWorkMode.AFTER_CALL_WORK == dn.getWorkMode()) {
-                    done.complete(true);
+                    done.complete(null);
                 }
         });
         //endregion
-
+		
         String authUrl = String.format("%s/auth/v3", apiUrl);
         ApiClient authClient = new ApiClient();
         authClient.setBasePath(authUrl);
@@ -93,12 +93,24 @@ public class Main {
         DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, agentUsername, agentPassword);
 
         User user = api.initialize(resp.getAccessToken()).get();
-        System.out.println("The workspace api is now successfully initialized");
-        System.out.println("User data: " + user); 
+        api.activateChannels(user.getAgentId(), user.getAgentId());
 
         System.out.println("Waiting for completion...");
         done.get();
-
+		
         api.destroy();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
