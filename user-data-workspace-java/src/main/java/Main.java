@@ -3,15 +3,13 @@ import com.genesys.workspace.common.WorkspaceApiException;
 
 import com.genesys.workspace.events.CallStateChanged;
 import com.genesys.workspace.events.DnStateChanged;
+import com.genesys.workspace.events.NotificationType;
 import com.genesys.workspace.models.User;
+import com.genesys.workspace.models.KeyValueCollection;
 import com.genesys.workspace.models.Call;
 import com.genesys.workspace.models.CallState;
 import com.genesys.workspace.models.AgentWorkMode;
 import com.genesys.workspace.models.Dn;
-import com.genesys.workspace.models.targets.TargetSearchResult;
-import com.genesys.workspace.models.targets.Target;
-import com.genesys.workspace.models.targets.TargetType;
-import com.genesys.workspace.models.targets.availability.ChannelAvailability;
 
 import com.genesys.internal.authorization.api.AuthenticationApi;
 import com.genesys.internal.common.ApiClient;
@@ -40,19 +38,13 @@ public class Main {
 			//endregion
 			
 		} catch(Exception e) {
-			System.err.println("InvalcallId args");
+			System.err.println("Invalid args");
 			System.err.println(e);
 		}
 		
 	}
 	
-	boolean hasCalledInitiateConference = false;
-	boolean hasCalledCompleteConference = false;
-	
-	int actionsCompleted = 0;
-	
-	String consultConnId = null;
-	String parentConnId = null;
+	boolean hasUpdated = false;
 	CompletableFuture future = new CompletableFuture();
 	WorkspaceApi api;
 	
@@ -65,6 +57,84 @@ public class Main {
 				options.get("baseUrl"),
 				Boolean.parseBoolean(options.get("debugEnabled"))
 		);
+		//endregion
+		
+		//region Registering Event Handlers
+		//Here we register Call and Dn event handlers.
+		
+		api.voice().addCallEventListener((CallStateChanged msg) -> {
+			try {
+				Call call = msg.getCall();
+				String id = call.getId();
+				switch (msg.getNotificationType()) {
+					
+					case CALL_RECOVERED:
+					case STATE_CHANGE:
+						
+						switch (call.getState()) {
+							case RINGING:
+								System.out.println("Answering call...");
+								api.voice().answerCall(call.getId());
+								break;
+
+							case ESTABLISHED:
+								System.out.println("Answered");
+						
+								//region Attaching User Data
+								//Attaching user data with value: {"key": "value"} to the call. If a pair with key "user" already exists it will not overwrite that pair and will make a new pair.
+								KeyValueCollection userData = new KeyValueCollection();
+								userData.addString("key", "value");
+								System.out.println("Attatching user data: " + userData);
+						
+								api.voice().attachUserData(id, userData);
+								//endregion
+						
+								break;
+						}
+						break;
+					
+					//region User Data Notification
+					//We get a callStateChanged notification when user data is attached/updated.
+					//We can use call.getUserData() to get the current user data for that call.
+					case ATTACHED_DATA_CHANGED:
+						KeyValueCollection userData = call.getUserData();
+						String value = userData.getString("key");
+						if(value == null) {
+							future.complete(null);
+							break;
+						}
+						
+						if(value.equals("value")) {
+							
+							//region Updating User Data
+							//Updating user data with value: {"key": "newValue"} to the call. If pairs with key "user" already exist it will overwrite those pairs.
+							KeyValueCollection newUserData = new KeyValueCollection();
+							newUserData.addString("key", "newValue");
+							System.out.println("Updating user data: " + newUserData);
+						
+							api.voice().updateUserData(id, newUserData); 
+							//endregion
+							
+						} else if(value.equals("newValue")) {
+							
+							//region Deleting User Data
+							//Deleting all the data with the specified key.
+							System.out.println("Deleting user data with key: 'key'");
+						
+							api.voice().deleteUserDataPair(id, "key"); 
+							//endregion
+						}
+						break;
+					//endregion
+				}
+				
+			} catch(WorkspaceApiException e) {
+				System.err.println("Exception:" + e);
+				future.completeExceptionally(e);
+			}
+		});
+		
+		
 		//endregion
 		
 		try {
@@ -80,41 +150,16 @@ public class Main {
 				System.out.println("Auth code is: [" + authCode + "]");
 			
 			System.out.println("Initializing API...");
-			User user =  api.initialize(authCode, "http://localhost").get();
-			
+			CompletableFuture<User> initFuture = api.initialize(authCode, "http://localhost");
+			User user = initFuture.get();
+		
 			System.out.println("Activating channels...");
 			api.activateChannels(user.getAgentId(), user.getAgentId());
 			api.voice().setAgentReady();
-			
-			System.out.println("Searching for targets");
-			TargetSearchResult result = api.targets().search(options.get("searchTerm"));
-			if(result.getTotalMatches() > 0) {
-				
-				try {
-					Target target = result.getTargets().stream()
-						.filter(t -> t.getType() == TargetType.AGENT).findFirst().get();
-					System.out.println("Found target: " + target.getName());
-					
-					try {
-						String phoneNumber = ((ChannelAvailability)target.getAgentAvailability().getChannels().toArray()[0]).getPhoneNumber();
-						System.out.println("Calling number: " + phoneNumber);
-						api.voice().makeCall(phoneNumber);
-					} catch(Exception ex) {
-						System.err.println("No phone number");
-					}
-					
-					
-				} catch(Exception ex) {
-					System.err.println("No targets are agents");
-				}
-				
-				
-			} else {
-				System.err.println("Search came up empty");
-			}
-			
-			
-			
+		
+			System.out.println("Waiting for an inbound call...");
+			future.get();
+		
 			System.out.println("done");
 			api.destroy();
 			
@@ -157,4 +202,3 @@ public class Main {
 	}
 	
 }
-
