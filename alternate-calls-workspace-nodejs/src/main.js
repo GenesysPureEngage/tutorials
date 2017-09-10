@@ -1,123 +1,113 @@
-const WorkspaceApi = require('genesys-workspace-client-js');
-const argv = require('yargs').argv;
+const workspace = require('genesys-workspace-client-js');
+const authorization = require('genesys-authorization-client-js');
+
+const apiKey = "<apiKey>";
+const apiUrl = "<apiUrl>";
 
 //region Create the api object
 //Create the api object passing the parsed command line arguments.
-let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
-async function main() {
-	try {
-		//region Register event handler
-    	//Register event handler to get notifications of call state changes and find held and established calls.
-    	var isAlternating = false;
-    	var heldCall;
-    	var establishedCall;
-    	var actionsCompleted = 0;
-    	
-    	api.on('CallStateChanged', async msg => {
-    		console.log(msg);
-    		let call = msg.call;
-    		if(!isAlternating) {
-				switch(call.state) {
-					case 'Established':
-						console.log(`Found established call: [${call.id}]`);
-						establishedCall = call;
-						break;
-					case 'Held':
-						console.log(`Found held call: [${call.id}]`);
-						if(establishedCall) if(establishedCall.id == call.id) {
-							establishedCall = undefined;
-							console.log('(Established call is now held)');
-						}
-						heldCall = call;
-				}
-    		
-				if(establishedCall && heldCall) {
-					console.log(`Found held call: [${heldCall.id}] and established call: [${establishedCall.id}]`);
-					console.log('Alternating...');
-					isAlternating = true;
-					await api.voice.alternateCalls(establishedCall.id, heldCall.id);
-				
-				} 
-    		} else if(isAlternating) {
-    			
-    			if(call.state == 'Established' && call.id == heldCall.id) {
-    				console.log(`Call retrieved: [${call.id}]`);
-    				actionsCompleted ++;
-    			}
-    			
-    			if(call.state == 'Held' && call.id == establishedCall.id) {
-    				console.log(`Call held: [${call.id}]`);
-    				actionsCompleted ++;
-    			}
-    			
-    			if(actionsCompleted == 2) {
-    				console.log('Calls alternated');
-    				console.log('done');
-    				await api.destroy();
-    			}
-    			
-    		}
-    		
-    	});
-    	//endregion
-    	const code = await getAuthCode();
-        //region Initiaize the API and activate channels
-        //Initialize the API and activate channels
-        console.log('Initializing API...');
-        await api.initialize({code: code, redirectUri: 'http://localhost'});
-		console.log('Activating channels...');
-		await api.activateChannels(api.user.employeeId, api.user.agentLogin);
-	
-		//region Wait for held and established calls
-		//The tutorial waits for held and established calls to alternate.
-		console.log('Waiting for held and established calls to alternate...');
-		
-	} catch(err) {
-		console.error(err);
-		api.destroy();
-	}
-	
-	
-}
+//region Register event handler
+//Register event handler to get notifications of call state changes and find held and established calls.
+let heldCallId = null;
+let establishedCallId = null;
+let alternated = false;
+let busy = false;
 
+const calls = [];
+workspaceApi.on('CallStateChanged', msg => {
+    const call = msg.call;
+    const callId = call.id;
+    
+    console.log(`${call.state}: ${callId}`);
+    
+    switch (call.state) {
+    case 'Ringing':
+        if(busy) {
+            calls.push(callId);
+        }
+        else {
+            busy = true;
+            console.info('Answering call');
+            workspaceApi.voice.answerCall(callId);            
+        }
+        break;
 
-async function getAuthCode() {
-	
-	let requestOptions = {
-	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
-	  headers: {
-		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
-		'x-api-key': argv.apiKey
-	  },
-	  resolveWithFullResponse: true,
-	  simple: false,
-	  followRedirect: false
-	}
+    case 'Established':
+        establishedCallId = callId;
+        
+        if(!heldCallId) {
+            workspaceApi.voice.holdCall(callId);
+        }
+        else if(!alternated) {
+            alternated = true;
+            console.log('Alternating calls');
+            workspaceApi.voice.alternateCalls(establishedCallId, heldCallId);
+        }
+        else if(alternated) {
+            console.log('done');
+            process.exit(0);
+        }
+        break;
+    case 'Held': 
+        heldCallId = callId;
+        busy = false;
+        const anotherCallId = calls.pop();
+        if(anotherCallId) {
+            busy = true;
+            console.info('Answering call');
+            workspaceApi.voice.answerCall(anotherCallId);
+        }
+        
+        break;
+    }
+});
+//endregion
 
-	let response = await require('request-promise-native')(requestOptions);
-	if (!response.headers['location']) {
-	  throw {error: 'No Location Header', response: response};
-	}
+const client = new authorization.ApiClient();
+client.basePath = `${apiUrl}/auth/v3`;
+client.defaultHeaders = {'x-api-key': apiKey};
+client.enableCookies = true;
+const authApi = new authorization.AuthenticationApi(client);
 
-	const location = require('url').parse(response.headers['location'], true);
-	let code = location.query.code;
-	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
+const agentUsername = "<agentUsername3>";
+const agentPassword = "<agentPassword3>";
+const clientId = "<clientId>";
+const clientSecret = "<clientSecret>";
 
-	return code;
-}
+const opts = {
+    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
+    clientId: clientId,
+    scope: '*',
+    username: agentUsername,
+    password: agentPassword
+};
+    
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+    const data = resp.response.body;
+    const accessToken = data.access_token;
+    if(!accessToken) {
+        throw new Error('Cannot get access token');
+    }
+    
+    return accessToken;
+}).then(token => {
+    //region Initiaize the API and activate channels
+    //Initialize the API and activate channels
+    console.info('Initializing workspace');
+    return workspaceApi.initialize({token: token}).then(() => {
+        console.info('Activating channels');
+        return workspaceApi.activateChannels(workspaceApi.user.agentLogin, workspaceApi.user.agentLogin);
+    });
+    //endregion
+})
+.catch(console.error);
 
-main();
+setInterval(() => {
+    
+    
+}, 1000);
 
-
-
-
-
-
-
-
-
-
-
-
+console.log('Waiting for completion');

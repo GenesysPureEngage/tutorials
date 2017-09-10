@@ -82,16 +82,4 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
 })
 .catch(console.error);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+console.log('Waiting for completion');
