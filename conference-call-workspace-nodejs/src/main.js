@@ -1,119 +1,96 @@
-const WorkspaceApi = require('genesys-workspace-client-js');
-const argv = require('yargs').argv;
+const workspace = require('genesys-workspace-client-js');
+const authorization = require('genesys-authorization-client-js');
 
-if(!argv.destination) {
-	console.log("This tutorial requires argument: 'destination'");
-	process.exit();
-}
+const apiKey = "<apiKey>";
+const apiUrl = "<apiUrl>";
+const destination = "<agentPhoneNumber3>";
 
 //region Create the api object
 //Create the api object passing the parsed command line arguments.
-let api = new WorkspaceApi(argv.apiKey, argv.baseUrl, argv.debugEnabled);
+let workspaceApi = new workspace(apiKey, apiUrl, false);
 //endregion
 
-async function main() {
-	try {
-		
-    	var parentCall;
-    	var consultCall;
-    	var initiatingConference = false;
-    	var completingConference = false;
-    	//region Register event handler
-    	//Register event handler to get notifications of call state changes.
-    	api.on('CallStateChanged', async msg => {
-    		
-    		try {
-    			let call = msg.call;
-    			if(!initiatingConference) {
-					if(!parentCall && call.state == 'Established') {
-						parentCall = call;
-						console.log(`Found established call: [${call.id}]`);
-						console.log('Initiating Conference...');
-						initiatingConference = true;
-						const response = await api.voice.initiateConference(call.id, argv.destination + '');
-					}
-    			} else {
-					if(call.state == 'Held' && call.id == parentCall.id) {
-						console.log(`Held call: [${call.id}]`);
-					}
-					if(call.state == 'Dialing') {
-						console.log(`Calling consultant: [${call.id}]`);
-						consultCall = call;
-					}
-					if(consultCall) 
-						if(call.state == 'Established' && call.id == consultCall.id) {
-							console.log(`Consult call answered: [${call.id}]]`);
-							console.log('Completing conference...');
-							completingConference = true;
-							await api.voice.completeConference(consultCall.id, parentCall.id);
-						}
-    			}
-    			
-    			if(completingConference) {
-    				if(call.state == 'Released' && call.id == consultCall.id) {
-    					console.log(`Consult call released: [${call.id}]`);
-    					console.log('Conference complete');
-    					console.log('done');
-    					await api.destroy();
-    				}
-    			}
-    			
-    		} catch(err) {
-    			console.error(err);
-    			api.destroy();
-    		}
-    	});
-    	//endregion
-    	
-    	const code = await getAuthCode();
-        //region Initiaize the API and activate channels
-        //Initialize the API and activate channels
-        console.log('Initializing API...');
-        await api.initialize({code: code, redirectUri: 'http://localhost'});
-		console.log('Activating channels...');
-		await api.activateChannels(api.user.employeeId, api.user.agentLogin);
-		
-		//region Wait for an established call
-		//The tutorial waits for an established call so it can initiate conference
-		console.log('Waiting for an established call...');
-		
-	} catch(err) {
-		console.error(err);
-		api.destroy();
-	}
-	
-	
-	
-}
+let originalCallId = null;
+let conferenceCallId = null;
 
-async function getAuthCode() {
-	
-	let requestOptions = {
-	  url: `${argv.baseUrl}/auth/v3/oauth/authorize?response_type=code&client_id=${argv.clientId}&redirect_uri=http://localhost`,
-	  headers: {
-		'authorization':  'Basic ' + new Buffer(`${argv.username}:${argv.password}`).toString('base64'),
-		'x-api-key': argv.apiKey
-	  },
-	  resolveWithFullResponse: true,
-	  simple: false,
-	  followRedirect: false
-	}
+//region Register event handler
+//Register event handler to get notifications of call state changes.
+workspaceApi.on('CallStateChanged', msg => {
+    const call = msg.call;
+    const callId = call.id;
+    
+    console.info(`${call.state}: ${callId}`);
+    
+    switch(call.state) {
+        case "Established":
+            if(!originalCallId) {
+                originalCallId = callId;
+                console.info('Initiate conference');
+                workspaceApi.voice.initiateConference(callId, destination);
+            }
+            else if(conferenceCallId === callId) {
+                console.info('Complete conference');
+                workspaceApi.voice.completeConference(callId, originalCallId);
+            }
+            break;
+        case 'Dialing':
+            //region Dialing
+            //After the conference is initiated, we will get a dialing event for the new call.
+            conferenceCallId = callId;
+            //endregion
+            break;
+        case 'Released':
+            //region Released
+            //The call state is changed to 'Released' when the call is ended.
+            console.info('done');
+            process.exit(0);
+            //endregion
+            break;
+        case 'Ringing':
+            workspaceApi.voice.answerCall(callId);
+            break;
+    }
+});
+//endregion
 
-	let response = await require('request-promise-native')(requestOptions);
-	if (!response.headers['location']) {
-	  throw {error: 'No Location Header', response: response};
-	}
+const client = new authorization.ApiClient();
+client.basePath = `${apiUrl}/auth/v3`;
+client.defaultHeaders = {'x-api-key': apiKey};
+client.enableCookies = true;
+const authApi = new authorization.AuthenticationApi(client);
 
-	const location = require('url').parse(response.headers['location'], true);
-	let code = location.query.code;
-	if(argv.debugEnabled == 'true') console.log(`Auth code is [${code}]...`);
+const agentUsername = "<agentUsername2>";
+const agentPassword = "<agentPassword2>";
+const clientId = "<clientId>";
+const clientSecret = "<clientSecret>";
 
-	return code;
-}
+const opts = {
+    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
+    clientId: clientId,
+    scope: '*',
+    username: agentUsername,
+    password: agentPassword
+};
+    
+authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
+    const data = resp.response.body;
+    const accessToken = data.access_token;
+    if(!accessToken) {
+        throw new Error('Cannot get access token');
+    }
+    
+    return accessToken;
+}).then(token => {
+    //region Initiaize the API and activate channels
+    //Initialize the API and activate channels
+    return workspaceApi.initialize({token: token}).then(() => {
+        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
+    });
+    //endregion
+})
+.catch(console.error);
 
-main();
-
-
+console.log('Waiting for completion');
 
 
 
