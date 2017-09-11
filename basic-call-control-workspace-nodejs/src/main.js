@@ -9,6 +9,8 @@ const apiUrl = "<apiUrl>";
 const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
+let callHasBeenHeld = false;
+
 //region Register event handlers
 //Register event handlers to get notifications of call and dn state changes and implement the automated sequence
 workspaceApi.on('CallStateChanged', async msg => {
@@ -69,8 +71,8 @@ client.basePath = `${apiUrl}/auth/v3`;
 client.defaultHeaders = {'x-api-key': apiKey};
 client.enableCookies = true;
 
-const agentUsername = "<agentUsername>";
-const agentPassword = "<agentPassword>";
+const agentUsername = "<agentUsername2>";
+const agentPassword = "<agentPassword2>";
 const clientId = "<clientId>";
 const clientSecret = "<clientSecret>";
 
