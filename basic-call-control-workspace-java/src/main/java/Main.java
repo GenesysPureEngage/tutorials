@@ -84,8 +84,8 @@ public class Main {
 
         AuthenticationApi authApi = new AuthenticationApi(authClient); 
 
-        String agentUsername = "<agentUsername>";
-        String agentPassword = "<agentPassword>";
+        String agentUsername = "<agentUsername2>";
+        String agentPassword = "<agentPassword2>";
         String clientId = "<clientId>";
         String clientSecret = "<clientSecret>";
 
