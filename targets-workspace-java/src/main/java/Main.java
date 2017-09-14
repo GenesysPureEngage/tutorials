@@ -2,19 +2,14 @@ import com.genesys.workspace.WorkspaceApi;
 import com.genesys.workspace.models.User;
 import com.genesys.workspace.models.targets.TargetSearchResult;
 
-import com.genesys.workspace.models.targets.Target;
-import com.genesys.workspace.models.targets.TargetType;
-import com.genesys.workspace.models.targets.availability.ChannelAvailability;
 
 import com.genesys.internal.authorization.api.AuthenticationApi;
 import com.genesys.internal.authorization.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
 
 import java.util.Base64;
-import java.util.concurrent.CompletableFuture;
 
 public class Main {
-	static CompletableFuture future = new CompletableFuture();
         
 	public static void main(String[] args) throws Exception {
             //region creating WorkspaceApi
@@ -49,30 +44,15 @@ public class Main {
 			
             System.out.println("Searching for targets");
             TargetSearchResult result = api.targets().search("<searchTerm>");
-			if(result.getTotalMatches() > 0) {
-				
-				try {
-					Target target = result.getTargets().stream()
-						.filter(t -> t.getType() == TargetType.AGENT).findFirst().get();
-					System.out.println("Found target: " + target.getName());
-					
-					try {
-						String phoneNumber = ((ChannelAvailability)target.getAgentAvailability().getChannels().toArray()[0]).getPhoneNumber();
-						System.out.println("Calling number: " + phoneNumber);
-						api.voice().makeCall(phoneNumber);
-					} catch(Exception ex) {
-						System.err.println("No phone number");
-					}
-					
-					
-				} catch(Exception ex) {
-					System.err.println("No targets are agents");
-				}
-				
-				
-			} else {
-				System.err.println("Search came up empty");
-			}
+            if(result.getTotalMatches() > 0) {
+                result.getTargets().forEach(target -> {
+                    System.out.println("Name: " + target.getName());
+                    System.out.println("PhoneNumber: " + target.getNumber());
+                });
+            }
+            else {
+                    System.out.println("Search came up empty");
+            }
 
             System.out.println("done");
             api.destroy();
