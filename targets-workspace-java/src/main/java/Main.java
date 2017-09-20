@@ -3,8 +3,8 @@ import com.genesys.workspace.models.User;
 import com.genesys.workspace.models.targets.TargetSearchResult;
 
 
-import com.genesys.internal.authorization.api.AuthenticationApi;
-import com.genesys.internal.authorization.model.DefaultOAuth2AccessToken;
+import com.genesys.internal.authentication.api.AuthenticationApi;
+import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
 
 import java.util.Base64;

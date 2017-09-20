@@ -1,5 +1,5 @@
-import com.genesys.internal.authorization.api.AuthenticationApi;
-import com.genesys.internal.authorization.model.DefaultOAuth2AccessToken;
+import com.genesys.internal.authentication.api.AuthenticationApi;
+import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
 import com.genesys.workspace.WorkspaceApi;
 import com.genesys.workspace.common.WorkspaceApiException;
