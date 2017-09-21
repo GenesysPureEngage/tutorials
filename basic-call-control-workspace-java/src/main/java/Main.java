@@ -90,7 +90,7 @@ public class Main {
         String clientSecret = "<clientSecret>";
 
         String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
-        DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, agentUsername, agentPassword);
+        DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
 
         User user = api.initialize(resp.getAccessToken()).get();
         api.activateChannels(user.getAgentId(), user.getAgentId());
