@@ -18,7 +18,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
         
 	public static void main(String[] args) throws Exception {
-            //region creating WorkspaceApi
+            //region creating Statistics
             //Creating a Statistics object with the apiKey, apiUrl
             String apiKey = "<apiKey>";
             String apiUrl = "<apiUrl>";
