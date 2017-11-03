@@ -1,6 +1,7 @@
 import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
+import com.genesys.internal.statistics.model.StatisticData;
 import com.genesys.internal.statistics.model.StatisticValue;
 import com.genesys.statistics.ServiceState;
 import com.genesys.statistics.StatisticDesc;
@@ -72,19 +73,24 @@ public class Main {
                 
                 
                 //region Creating subscriptions to existing agent statistics
+                //There we use agent's username as objectId. The objectId for agent is employeeId. Usually it's equal to username, but it can be configured (in config server) to have different value. 
                 StatisticDesc[] statistics = new StatisticDesc[] { 
                     new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", "CurrentAgentState"),
                     new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", "TimeInCurrentState")
                 };
 
                 logger.info("Creating subscription");
-                api.createSubscription(UUID.randomUUID().toString(), statistics);
+                StatisticData subscription = api.createSubscription(UUID.randomUUID().toString(), statistics);
                 //endregion
+                
+                logger.info("{}", subscription.getStatistics());
 
                 //region Statistics notifications
                 //Waiting for statistics update, if agent state is changed we will recieve notifications
                 Thread.sleep(60000);
                 //endregion
+                
+                api.deleteSubscription(subscription.getSubscriptionId());
                 
                 logger.info("done");
             }
