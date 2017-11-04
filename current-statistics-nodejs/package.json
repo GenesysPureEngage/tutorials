@@ -1,0 +1,17 @@
+{
+  "name": "current-statistics-nodejs",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "contributors": [],
+  "dependencies": {
+    "genesys-authorization-client-js": "1.0.55",
+    "genesys-statistics-client-js": "1.0.37"
+  },
+  "main": "src/main.js"
+}
