@@ -6,14 +6,16 @@ import com.genesys.internal.statistics.model.StatisticValue;
 import com.genesys.statistics.ServiceState;
 import com.genesys.statistics.StatisticDesc;
 import com.genesys.statistics.Statistics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -72,11 +74,31 @@ public class Main {
                 //endregion
                 
                 
-                //region Creating subscriptions to existing agent statistics
+                //region Creating subscriptions
                 //There we use agent's username as objectId. The objectId for agent is employeeId. Usually it's equal to username, but it can be configured (in config server) to have different value. 
-                StatisticDesc[] statistics = new StatisticDesc[] { 
-                    new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", "CurrentAgentState"),
-                    new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", "TimeInCurrentState")
+
+                //Creating statistic to report current agent state
+                HashMap<String,Object> agentStateDefinition = new HashMap<>();
+                agentStateDefinition.put("notificationMode","Immediate");
+                agentStateDefinition.put("category","CurrentState");
+                agentStateDefinition.put("subject","DNStatus");
+                agentStateDefinition.put("mainMask","*");
+                StatisticDesc currentAgentStateStat = new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", agentStateDefinition);
+
+                //Creating statistic to report time in current State
+                HashMap<String,Object> timeInCurrentStateDefinition = new HashMap<>();
+                timeInCurrentStateDefinition.put("category","CurrentTime");
+                timeInCurrentStateDefinition.put("mainMask","*");
+                timeInCurrentStateDefinition.put("notificationFrequency",1);
+                timeInCurrentStateDefinition.put("insensitivity",0);
+                timeInCurrentStateDefinition.put("notificationMode","Periodical");
+                timeInCurrentStateDefinition.put("subject","DNStatus");
+
+                //Creating subscription
+                StatisticDesc timeInCurrentStateStat = new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", timeInCurrentStateDefinition);
+                StatisticDesc[] statistics = new StatisticDesc[] {
+                    currentAgentStateStat,
+                    timeInCurrentStateStat
                 };
 
                 logger.info("Creating subscription");
