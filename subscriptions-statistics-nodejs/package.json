@@ -12,7 +12,7 @@
   "dependencies": {
     "uuid": "3.1.0",
     "genesys-authorization-client-js": "1.0.55",
-    "genesys-statistics-client-js": "../../statistics-client-js"
+    "genesys-statistics-client-js": "1.0.49"
   },
   "main": "src/main.js"
 }
