@@ -13,7 +13,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -72,7 +72,7 @@ public class Main
 
 		//region Initializing Statistics
 		//Initializing Statistics with a obtained earlier authentication token
-		CompletableFuture<Void> future = api.initialize(token);
+		Future<Void> future = api.initialize(token);
 
 		try
 		{
@@ -120,6 +120,7 @@ public class Main
 			//region Statistics notifications
 			//Waiting for statistics update, if agent state is changed we will receive notifications, also we will receive
 			//periodical notifications of value of timeInCurrentState
+			//Thread.sleep is used for tutorial purposes only.
 			Thread.sleep(60000);
 			//endregion
 
