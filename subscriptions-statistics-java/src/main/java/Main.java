@@ -1,7 +1,7 @@
 import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
-import com.genesys.internal.statistics.model.StatisticData;
+import com.genesys.internal.statistics.model.StatisticDataResponse;
 import com.genesys.internal.statistics.model.StatisticValue;
 import com.genesys.statistics.ServiceState;
 import com.genesys.statistics.StatisticDesc;
@@ -112,10 +112,11 @@ public class Main
 			};
 
 			logger.info("Creating subscription");
-			StatisticData subscription = api.createSubscription(UUID.randomUUID().toString(), statistics);
+			final String subscriptionId = UUID.randomUUID().toString();
+			StatisticDataResponse subscription = api.createSubscription(subscriptionId, statistics);
 			//endregion
 
-			logger.info("{}", subscription.getStatistics());
+			logger.info("{}", subscription);
 
 			//region Statistics notifications
 			//Waiting for statistics update, if agent state is changed we will receive notifications, also we will receive
@@ -125,7 +126,7 @@ public class Main
 			//endregion
 
 			//region Subscription cleanup
-			api.deleteSubscription(subscription.getSubscriptionId());
+			api.deleteSubscription(subscriptionId);
 			//endregion
 
 			logger.info("done");
