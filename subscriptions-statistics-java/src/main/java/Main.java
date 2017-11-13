@@ -2,9 +2,9 @@ import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
 import com.genesys.internal.statistics.model.StatisticDataResponse;
-import com.genesys.internal.statistics.model.StatisticValue;
 import com.genesys.statistics.ServiceState;
 import com.genesys.statistics.StatisticDesc;
+import com.genesys.statistics.StatisticValueNotification;
 import com.genesys.statistics.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,7 @@ public class Main
 			}
 
 			@Override
-			public void onValues(Collection<StatisticValue> list)
+			public void onValues(Collection<StatisticValueNotification> list)
 			{
 				logger.info("Stats: {}", list);
 			}
