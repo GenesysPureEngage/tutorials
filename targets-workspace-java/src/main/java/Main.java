@@ -1,25 +1,21 @@
-import com.genesys.workspace.WorkspaceApi;
-import com.genesys.workspace.models.User;
-import com.genesys.workspace.models.targets.TargetSearchResult;
-
-
 import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
-
+import com.genesys.workspace.WorkspaceApi;
+import com.genesys.workspace.models.User;
+import com.genesys.workspace.models.targets.SearchResult;
+import com.genesys.workspace.models.targets.Target;
 import java.util.Base64;
 
 public class Main {
         
 	public static void main(String[] args) throws Exception {
-            //region creating WorkspaceApi
-            //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
             String apiKey = "<apiKey>";
             String apiUrl = "<apiUrl>";
 
             //region creating WorkspaceApi
             //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-            WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+            WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
             //endregion
 
             String authUrl = String.format("%s/auth/v3", apiUrl);
@@ -43,8 +39,8 @@ public class Main {
             api.voice().setAgentReady();
 			
             System.out.println("Searching for targets");
-            TargetSearchResult result = api.targets().search("<searchTerm>");
-            if(result.getTotalMatches() > 0) {
+            SearchResult<Target> result = api.targets().search("<searchTerm>");
+            if(result.getTotal() > 0) {
                 result.getTargets().forEach(target -> {
                     System.out.println("Name: " + target.getName());
                     System.out.println("PhoneNumber: " + target.getNumber());

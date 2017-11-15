@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
 
-    static final CompletableFuture done = new CompletableFuture();
+    static final CompletableFuture<Void> done = new CompletableFuture<>();
     static String heldCallId = null;
     static String establishedCallId = null;
     static AtomicBoolean alternated = new AtomicBoolean(false);
@@ -27,8 +27,8 @@ public class Main {
         String apiUrl = "<apiUrl>";
 
         //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         
         //region Registering Event Handlers
         //Here we register Call and Dn event handlers.

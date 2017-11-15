@@ -1,29 +1,24 @@
-import com.genesys.workspace.WorkspaceApi;
-import com.genesys.workspace.common.WorkspaceApiException;
-
-import com.genesys.workspace.events.DnStateChanged;
-import com.genesys.workspace.models.Dn;
-
 import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
+import com.genesys.workspace.WorkspaceApi;
+import com.genesys.workspace.common.WorkspaceApiException;
+import com.genesys.workspace.events.DnStateChanged;
+import com.genesys.workspace.models.Dn;
 import com.genesys.workspace.models.User;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 public class Main {
-	static final CompletableFuture done = new CompletableFuture();
+	static final CompletableFuture<Void> done = new CompletableFuture<>();
     
 	public static void main(String[] args) throws Exception {	
-	
-            //region creating WorkspaceApi
-            //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
             String apiKey = "<apiKey>";
             String apiUrl = "<apiUrl>";
 
             //region creating WorkspaceApi
             //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-            WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+            WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
             //endregion
 
             //region Registering Event Handlers
