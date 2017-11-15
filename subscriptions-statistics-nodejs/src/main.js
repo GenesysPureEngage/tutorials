@@ -47,10 +47,10 @@
         
         //region Registering notifications handlers
         //Here we register handlers for Service State (ServiceChange) and Statistics Update (Values) events.
-        api.on('ServiceChange', data => {
+        api.on(api.SERVICE_CHANGE_EVENT, data => {
             logger.info(data);
         });
-        api.on('Values', data => {
+        api.on(api.UPDATES_EVENT, data => {
             logger.info(data);
         });
         //endregion

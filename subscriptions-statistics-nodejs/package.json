@@ -11,8 +11,8 @@
   "contributors": [],
   "dependencies": {
     "uuid": "3.1.0",
-    "genesys-authorization-client-js": "1.0.55",
-    "genesys-statistics-client-js": "1.0.49"
+    "genesys-authorization-client-js": "1.0.188",
+    "genesys-workspace-client-js": "1.0.228"
   },
   "main": "src/main.js"
 }
