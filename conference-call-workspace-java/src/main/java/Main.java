@@ -1,14 +1,11 @@
 
-import com.genesys.workspace.WorkspaceApi;
-import com.genesys.workspace.common.WorkspaceApiException;
-
-import com.genesys.workspace.events.CallStateChanged;
-import com.genesys.workspace.models.User;
-import com.genesys.workspace.models.Call;
-
 import com.genesys.internal.authentication.api.AuthenticationApi;
 import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
 import com.genesys.internal.common.ApiClient;
+import com.genesys.workspace.WorkspaceApi;
+import com.genesys.workspace.common.WorkspaceApiException;
+import com.genesys.workspace.models.Call;
+import com.genesys.workspace.models.User;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
@@ -24,8 +21,8 @@ public class Main {
         String apiUrl = "<apiUrl>";
 
         //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         //endregion
 
         String destination = "<agentPhoneNumber3>";

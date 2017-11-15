@@ -15,8 +15,8 @@ repositories {
 
 dependencies {
     testCompile 'junit:junit:4.10'
-    compile 'com.genesys:workspace:1.0.12'
-    compile 'com.genesys:authorization:1.0.17'
+    compile 'com.genesys:workspace:1.0.104'
+    compile 'com.genesys:authorization:1.0.104'
 }
 
 jar {

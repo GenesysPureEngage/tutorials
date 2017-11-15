@@ -14,17 +14,15 @@ import java.util.concurrent.CompletableFuture;
 
 public class Main {
     static boolean hasCallBeenHeld = false;
-    static final CompletableFuture done = new CompletableFuture();
+    static final CompletableFuture<Void> done = new CompletableFuture<>();
     
     public static void main(String[] args) throws Exception {
-        //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
         String apiKey = "<apiKey>";
         String apiUrl = "<apiUrl>";
 
         //region creating WorkspaceApi
         //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         //endregion
 
         //region Registering Event Handlers

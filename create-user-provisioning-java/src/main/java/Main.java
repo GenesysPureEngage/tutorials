@@ -1,10 +1,10 @@
-import com.genesys.common.ApiClient;
-import com.genesys.provisioning.api.SessionApi;
-import com.genesys.provisioning.api.UsersApi;
-import com.genesys.provisioning.model.AddUserData;
-import com.genesys.provisioning.model.ApiSuccessResponse;
-import com.genesys.provisioning.model.LoginData;
-import com.genesys.provisioning.model.LoginSuccessResponse;
+import com.genesys.internal.common.ApiClient;
+import com.genesys.internal.provisioning.api.SessionApi;
+import com.genesys.internal.provisioning.api.UsersApi;
+import com.genesys.internal.provisioning.model.AddUserData;
+import com.genesys.internal.provisioning.model.ApiSuccessResponse;
+import com.genesys.internal.provisioning.model.LoginData;
+import com.genesys.internal.provisioning.model.LoginSuccessResponse;
 import java.net.CookieManager;
 import java.util.Arrays;
 

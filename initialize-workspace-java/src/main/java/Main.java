@@ -11,8 +11,8 @@ public class Main {
         String apiUrl = "<apiUrl>";
         
         //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
-        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl, false);
+        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         //endregion
 
         String authUrl = String.format("%s/auth/v3", apiUrl);
