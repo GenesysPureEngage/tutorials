@@ -10,11 +10,13 @@ public class Main {
         String apiKey = "<apiKey>";
         String apiUrl = "<apiUrl>";
         
-        //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        //region Create an instance of WorkspaceApi
+        //First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
         WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         //endregion
 
+        //region Authentication
+        //Now we can authenticate using the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html). We're following the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow in this tutorial, but you would typically use [Authorization Code Grant](https://tools.ietf.org/html/rfc6749#section-4.1) for a web-based agent application.
         String authUrl = String.format("%s/auth/v3", apiUrl);
         ApiClient authClient = new ApiClient();
         authClient.setBasePath(authUrl);
@@ -31,10 +33,12 @@ public class Main {
         String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
         DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
 
+        //region Initialization
+        //Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. This returns the current user, which we then print.
         User user = api.initialize(resp.getAccessToken()).get();
         System.out.println("The workspace api is now successfully initialized");
         System.out.println("User data: " + user); 
-
+        //endregion
 
         api.destroy();
    }

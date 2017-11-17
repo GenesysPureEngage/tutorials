@@ -1,5 +1,5 @@
-title: Search for Targets using the Workspace API
-description: This example shows how to search for a target given a certain key word using the targets API and then call them using the voice API.
+title: Search for targets
+description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to search for a target based on a key word.
 categories: 
   - workspace
 displayName: Node.Js

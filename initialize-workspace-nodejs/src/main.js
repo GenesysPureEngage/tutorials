@@ -4,8 +4,8 @@ const authorization = require('genesys-authorization-client-js');
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";
 
-//region Create the api object
-//Create the api object passing the parsed command line arguments.
+//region Create an instance of WorkspaceApi
+//First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
 const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
@@ -19,6 +19,8 @@ const agentPassword = "<agentPassword>";
 const clientId = "<clientId>";
 const clientSecret = "<clientSecret>";
 
+//region Authentication
+//Now we can authenticate using the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html). We're following the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow in this tutorial, but you would typically use [Authorization Code Grant](https://tools.ietf.org/html/rfc6749#section-4.1) for a web-based agent application.
 const authApi = new authorization.AuthenticationApi(client);
 const opts = {
     authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
@@ -37,13 +39,14 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
     
     return accessToken;
 }).then(token => {
-    //region Initiaize the API and activate channels
-    //Initialize the API 
+    //region Initialization
+    //Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. After initialization, get the current user.
     workspaceApi.initialize({token: token}).then(data => {
         console.log(workspaceApi.user);
         console.log('done');
         workspaceApi.destroy();
     });
+    //endregion
 }).catch(console.error);
 
 

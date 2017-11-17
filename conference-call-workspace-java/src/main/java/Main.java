@@ -20,15 +20,15 @@ public class Main {
         String apiKey = "<apiKey>";
         String apiUrl = "<apiUrl>";
 
-        //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        //region Create an instance of WorkspaceApi
+        //First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
         WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
         //endregion
 
         String destination = "<agentPhoneNumber3>";
         
-        //region Registering Event Handlers
-        //Here we register Call and Dn event handlers.
+        //region Register event handlers
+        //Now we can register event handlers that will be called whenever the Workspace Client Library publishes a CallStateChanged or DnStateChanged message. This let's us act on changes to the call state or DN state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Dialing, Established, Released.
         api.voice().addCallEventListener(msg -> {
             try {
                 Call call = msg.getCall();
@@ -37,20 +37,22 @@ public class Main {
                 System.out.println(String.format("%s: %s", call.getState(), callId));
 
                 switch (call.getState()) {
+                    //region Ringing
+                    //If the call state is Ringing, then answer the call.
                     case RINGING:
                         System.out.println("Answering call");
                         api.voice().answerCall(callId);
                         break;
+                    //endregion
+                    //region Dialing
+                    //After we `initiateConference()`, we'll get a Dialing event for the new call to the third party. We'll hold on to the ID of that consultation call so we can use it later to `completeConference()` once the call is Established.
                     case DIALING:
-                        //region Dialing
-                        //After the conference is initiated, we will get a dialing event for the new call.
                         conferenceCallId = callId;
-                        //endregion
                         break;
+                    //endregion
+                    //region Established
+                    //If the Established call is for the originating call we used to trigger this tutorial, then `initiateConference()`. If it's from our consultation call, then we want to `completeConference()` to bring all parties together in the conference call.
                     case ESTABLISHED:
-                        //region Established
-                        //When the call state is 'Established' this means that the call is in progress.
-                        //Here we check if this event if from answering the consult call.
                         if(originalCallId == null) {
                             originalCallId = callId;
                             
@@ -61,15 +63,14 @@ public class Main {
                             System.out.println("Completing conference");
                             api.voice().completeConference(callId, originalCallId);
                         }
-                        //endregion
                         break;
+                    //endregion
+                    //region Released
+                    //The call state is changed to Released when the call is ended.
                     case RELEASED:
-                        //region Released
-                        //The call state is changed to 'Released' when the call is ended.
                         done.complete(null);
-                        //endregion
                         break;
-
+                    //endregion
                 }
             }
             catch (WorkspaceApiException e) {
@@ -94,6 +95,8 @@ public class Main {
         String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
         DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
 
+        //region Initialization
+        //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html) when you follow the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         System.out.println("Initializing workspace");
         User user = api.initialize(resp.getAccessToken()).get();
 

@@ -4,28 +4,28 @@ const authorization = require('genesys-authorization-client-js');
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";
 
-//region Create the api object
-//Create the api object passing the parsed command line arguments.
+//region Create an instance of WorkspaceApi
+//First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
 const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
 let callHasBeenHeld = false;
 
 //region Register event handlers
-//Register event handlers to get notifications of call and dn state changes and implement the automated sequence
+//Now we can register event handlers that will be called whenever the Workspace Client Library publishes a CallStateChanged or DnStateChanged message. This let's us act on changes to the call state or DN state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, Held, or Released.
 workspaceApi.on('CallStateChanged', async msg => {
     let call = msg.call;
 
     switch (call.state) {
-        //region Answer call
-        //When a ringing call is detected, answer it.
+        //region Ringing
+        //If the call state is Ringing, then answer the call.
         case 'Ringing':
             console.log('Answering call...');
             await workspaceApi.voice.answerCall(call.id);
             break;
         //endregion
-        //region Handle established state
-        //The first time we see an established call it will be placed on hold. The second time, it is released.
+        //region Established
+        //The first time we see an Established call, place it on hold. The second time, release the call.
         case 'Established':
             if (!callHasBeenHeld) {
                 console.log('Placing call on hold...');
@@ -37,15 +37,15 @@ workspaceApi.on('CallStateChanged', async msg => {
             }
             break;
         //endregion
-        //region Handle held call
-        //When we see a held call, retrieve it
+        //region Held
+        //If the call state is Held, retrieve the call.
         case 'Held':
             console.log('Retrieving call...');
             await workspaceApi.voice.retrieveCall(call.id);
             break;
         //endregion
-        //region Handle released
-        //When we see a released call, set the agent state to ACW
+        //region Released
+        //If the call state is Released, set the agent's state to AfterCallWork.
         case 'Released':
             console.log('Setting agent notReady w/ ACW...');
             await workspaceApi.voice.notReady('AfterCallWork');
@@ -53,11 +53,11 @@ workspaceApi.on('CallStateChanged', async msg => {
         //endregion
     }
 });
-		
+
 workspaceApi.on('DnStateChanged', async msg => {
     let dn = msg.dn;
     //region Handle DN state change
-    //When the DN workMode changes to AfterCallWork the sequence is over and we can exit.
+    //When the DN workmode changes to AfterCallWork, the sequence is over and we can exit.
     console.log(`Dn updated - number [${dn.number}] state [${dn.agentState}] workMode [${dn.agentWorkMode}]...`);
     if (dn.agentWorkMode === 'AfterCallWork') {
         console.log('done');
@@ -65,6 +65,7 @@ workspaceApi.on('DnStateChanged', async msg => {
     }
     //endregion
 });
+//endregion
 
 const client = new authorization.ApiClient();
 client.basePath = `${apiUrl}/auth/v3`;
@@ -94,15 +95,16 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
     
     return accessToken;
 }).then(token => {
-    //region Initiaize the API and activate channels
-    //Initialize the API and activate channels
+    //region Initialization
+    //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html) when you follow the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
     return workspaceApi.initialize({token: token}).then(() => {
         return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
     });
+    //endregion
 }).catch(console.error);
 
 //region Wait for an inbound call
-//The tutorial waits and reacts to an inbound call to perform the automated sequence.
+//We wait for an inbound call so we can perform the automated sequence covered in our event handlers.
 console.log('Waiting for an inbound call...');
 //endregion
 
