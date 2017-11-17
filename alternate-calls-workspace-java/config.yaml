@@ -1,5 +1,5 @@
-title: Alternate Between Two Calls using the Workspace API
-description: This example shows you how to switch between two calls when you have one held call and one established call.
+title: Alternate between two calls
+description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to switch between two calls when one call is held and the other is established.
 categories: 
   - workspace
 displayName: Java

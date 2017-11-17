@@ -1,5 +1,5 @@
-title: Activate Channels and change state to ready using the Workspace API
-description: This example shows how to log in, activate channels and change state using the Workspace API. In this example we use CometD to recieve events when the server is done activating channels and changing state to ready.
+title: Change agent state to Ready
+description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to change an agent's state to Ready.
 categories: 
   - workspace
 displayName: Java

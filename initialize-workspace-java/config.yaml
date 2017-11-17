@@ -1,5 +1,5 @@
-title: Initialize Workspace using the Workspace API
-description: This example shows how to log in using the Authentication API
+title: Initialize Workspace
+description: This tutorial shows you how to get started with the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/). We'll cover the initial steps you need to perform whenever you use the client library  and show you how to get the current user.
 categories: 
   - workspace
 displayName: Java

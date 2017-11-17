@@ -1,5 +1,5 @@
-title: Basic Call Control using the Workspace API
-description: This example shows you how to answer an incomming call, hold it, retrieve it, and then hang up using CometD events.
+title: Basic call control
+description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to perform basic call control functions. You'll see how use event handlers to listen for call state change messages to answer an incoming call, hold it, retrieve it, and then hang up. We'll also update the agent's DN and use that as a trigger to end the tutorial.
 categories: 
   - workspace
 displayName: Java

@@ -16,27 +16,32 @@ public class Main {
             String apiKey = "<apiKey>";
             String apiUrl = "<apiUrl>";
 
-            //region creating WorkspaceApi
-            //Creating a WorkspaceApi object with the apiKey, baseUrl and 'debugEnabled' preference.
+            //region Create an instance of WorkspaceApi
+            //First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
             WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
             //endregion
 
-            //region Registering Event Handlers
-            //Here we register Call and Dn event handlers.
+            //region Register event handlers
+            //Now we can register an event handler that will be called whenever the Workspace Client Library publishes a DnStateChanged message. This let's us act on changes to the call state or DN state. Here we set up an event handler to act when it receives a DnStateChanged message where the agent state is either Ready or NotReady.
             api.voice().addDnEventListener((DnStateChanged msg) -> {
                 try {
                     Dn dn = msg.getDn();
                     switch(dn.getAgentState()) {
+                        //region Ready
+                        //If the agent state is Ready, we've completed our task and can clean up the API.
                         case READY:
                             System.out.println("Agent state is ready");
                             done.complete(null);
                             break;
-
+                        //endregion
+                        //region NotReady
+                        //If the agent state is NotReady, we call `setAgentReady()`.
                         case NOT_READY:
                             System.out.println("Agent state is not ready");
                             System.out.println("Setting state to ready...");
                             api.voice().setAgentReady();
                             break;
+                        //endregion
                     }
                 } catch(WorkspaceApiException ex) {
                     System.err.println("Exception:" + ex);
@@ -61,9 +66,12 @@ public class Main {
             String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
             DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
 
+            //region Initialization
+            //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html) when you follow the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
             User user = api.initialize(resp.getAccessToken()).get();
             api.activateChannels(user.getAgentId(), user.getAgentId());
-
+            //endregion
+            
             System.out.println("Waiting for completion...");
             done.get();
 

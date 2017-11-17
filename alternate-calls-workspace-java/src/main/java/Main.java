@@ -26,12 +26,13 @@ public class Main {
         String apiKey = "<apiKey>";
         String apiUrl = "<apiUrl>";
 
-        //region creating WorkspaceApi
-        //Creating a WorkspaceApi object with the apiKey, baseUrl
+        //region Create an instance of WorkspaceApi
+        //First we need to create a new instance of the WorkspaceApi class with the following parameters: **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these parameters from your PureEngage Cloud representative.
         WorkspaceApi api = new WorkspaceApi(apiKey, apiUrl);
-        
-        //region Registering Event Handlers
-        //Here we register Call and Dn event handlers.
+        //endregion
+
+        //region Register event handler
+        //Now we can register an event handler that will be called whenever the Workspace Client Library publishes a CallStateChanged message. This let's us act on changes to the call state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, or Held. We've added logic here to alternate between the calls based on the call state.
         api.voice().addCallEventListener(msg -> {
             try {
                 Call call = msg.getCall();
@@ -40,23 +41,25 @@ public class Main {
                 System.out.println(String.format("%s: %s", call.getState(), callId));
                 
                 switch (call.getState()) {
+                    //region Ringing
+                    //If the call state is Ringing, then answer the call.
                     case RINGING:
                         if(busy.compareAndSet(false, true)) {
-                            System.out.println("Asnwering call");
+                            System.out.println("Answering call");
                             api.voice().answerCall(callId);
                         }
                         else {
                             calls.add(callId);                            
-                        }
-                        
+                        }                       
                         break;
-                        
+                    //endregion
+                    
+                    //region Established
+                    //The first time we see an Established call, place it on hold. The second time, call `alternateCalls` with the **establishedCallId** and **heldCallId** as parameters.
                     case ESTABLISHED:
                         establishedCallId = callId;
                         
-                        //region Established
-                        //When the call state is 'Established' this means that the call is in progress.
-                        //This event is used both to find established calls when the program starts and to signal that a call has been retrieved as a result of alternating.
+                        
                         if(heldCallId == null) {
                             api.voice().holdCall(callId);
                         }
@@ -67,12 +70,12 @@ public class Main {
                         else if(alternated.get()) {
                             done.complete(null);
                         }
-                        //endregion
                         break;
-                        
+                    //endregion  
+
+                    //region Held
+                    //If the call state is Held, answer the other call.
                     case HELD:
-                        //region Held
-                        //This event is used both to find held calls when the program starts and signal that a call has been held as a result of alternating.
                         heldCallId = callId;
                         busy.set(false);
                         String anotherCallId = calls.poll();
@@ -81,8 +84,8 @@ public class Main {
                             System.out.println("Answering call");
                             api.voice().answerCall(anotherCallId);
                         }
-                        //endregion
                         break;
+                    //endregion
                 }
             } 
             catch (WorkspaceApiException e) {
@@ -107,12 +110,15 @@ public class Main {
         String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
         DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
 
+        //region Initialization
+        //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html) when you follow the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         System.out.println("Initializing workspace");
         User user = api.initialize(resp.getAccessToken()).get();
         
         System.out.println("Activating channels");
         api.activateChannels(user.getAgentId(), user.getAgentId());
-        
+        //endregion
+
         System.out.println("Waiting for completion...");
         done.get();
 
