@@ -1,5 +1,5 @@
-title: Create user using Provisioning API
-description: This example shows how to log in and create a user using the Provisioning API
+title: Create a user
+description: This tutorial shows you how to use the [Provisioning Client Library](https://developer.genhtcc.com/api/client-libraries/provisioning/) to create a user.
 categories: 
   - provisioning
 displayName: NodeJS
