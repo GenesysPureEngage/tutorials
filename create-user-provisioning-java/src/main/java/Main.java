@@ -17,9 +17,8 @@ public class Main {
         
         final String provisioningUrl = String.format("%s/provisioning/v3", apiUrl);
         
-        //region Initialize API Client
-        //Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
-        
+        //region Create an instance of ApiClient
+        //First we need to create a new instance of the ApiClient class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these from your PureEngage Cloud representative.        
         final ApiClient client = new ApiClient();
         client.setBasePath(provisioningUrl);
         client.addDefaultHeader("x-api-key", apiKey);
@@ -27,13 +26,13 @@ public class Main {
         client.setDebugging(true);
         //endregion
 
-        //region Create SessionApi instance
-        //Creating instance of SessionApi using the ApiClient.
+        //region Create an instance of SessionApi
+        //Create an instance of SessionApi using the **client** you created in the previous step.
         final SessionApi sessionApi = new SessionApi(client);
         //endregion
 
-        //region Logging in Provisioning API
-        //Logging in using our username and password
+        //region Login to the Provisioning API
+        //Logging in using our username and password.
         LoginData loginData = new LoginData();
         loginData.setDomainUsername(username);
         loginData.setPassword(password);
@@ -43,13 +42,13 @@ public class Main {
         }
         //endregion
 
-        //region Creating UsersApi instance
-        //Creating instance of UsersApi using the ApiClient
+        //region Create an instance of UsersApi
+        //Create an instance of UsersApi using the **client** you created previously.
         final UsersApi usersApi = new UsersApi(client);
         //endregion
 
-        //region Describing and creating a user
-        //Filling necessary information and creating a user using UsersApi instance
+        //region Create a new user
+        //Create a new user with the specified values.
         AddUserData usersData = new AddUserData();
         usersData.setUserName("<agentUsername>");
         usersData.setPassword("<agentPassword>");
@@ -66,8 +65,8 @@ public class Main {
         }
         //endregion
 
-        //region Logging out
-        //Ending our Provisioning API session
+        //region Log out
+        //Log out to end our Provisioning API session.
         sessionApi.logout();
         //endregion
     }

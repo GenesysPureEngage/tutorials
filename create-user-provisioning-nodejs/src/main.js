@@ -7,18 +7,20 @@ const apiUrl = "<apiUrl>";
 
 const provisioningUrl = `${apiUrl}/provisioning/v3`;
 
-//region Initialize API Client
-//Create and setup ApiClient instance with your ApiKey and Provisioning API URL.
+//region Create an instance of ApiClient
+//First we need to create a new instance of the ApiClient class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these from your PureEngage Cloud representative.
 const provisioningClient = new provisioning.ApiClient();
 provisioningClient.basePath = provisioningUrl;
 provisioningClient.defaultHeaders = { 'x-api-key': apiKey };
+//endregion
 
-//region Create SessionApi instance
-//Creating instance of SessionApi using the ApiClient.
+//region Create an instance of SessionApi
+//Create an instance of SessionApi using the **client** you created in the previous step.
 const sessionApi = new provisioning.SessionApi(provisioningClient);
+//endregion
 
-//region Logging in Provisioning API
-//Logging in using our username and password
+//region Login to the Provisioning API
+//Logging in using our username and password.
 sessionApi.login({
     domain_username: username,
     password: password
@@ -28,18 +30,21 @@ sessionApi.login({
     }
     
     return resp.data;
+//endregion
 }).then(resp => {
     //region Obtaining Provisioning API Session
     //Obtaining sessionId and setting PROVISIONING_SESSIONID cookie to the client
     const sessionId = resp.sessionId;
     provisioningClient.defaultHeaders.Cookie = `PROVISIONING_SESSIONID=${sessionId};`;
+    //endregion
 
-    //region Creating UsersApi instance
-    //Creating instance of UsersApi using the ApiClient
+    //region Create an instance of UsersApi
+    //Create an instance of UsersApi using the **client** you created previously.
     const usersApi = new provisioning.UsersApi(provisioningClient);
+    //endregion
 
-    //region Describing and creating a user
-    //Creating a user using UsersApi instance
+    //region Create a new user
+    //Create a new user with the specified values.
     const user = {
         userName: "<agentUsername>",
         firstName: "<agentFirstName>",
@@ -47,6 +52,7 @@ sessionApi.login({
         password: "<agentPassword>",
         accessGroup: [ "<agentAccessGroup>" ]
     };
+    //endregion
 
     return usersApi.addUser(user);
 }).then(resp => {
@@ -56,9 +62,10 @@ sessionApi.login({
     
     return resp.data;
 }).then(data => {
-    //region Logging out
-    //Ending our Provisioning API session
+    //region Log out
+    //Log out to end our Provisioning API session.
     sessionApi.logout();
+    //endregion
 }).catch(err => {
     console.error(err);
 });
