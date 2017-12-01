@@ -16,7 +16,7 @@ public class Main {
         //endregion
 
         //region Authentication
-        //Now we can authenticate using the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html). We're following the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow in this tutorial, but you would typically use [Authorization Code Grant](https://tools.ietf.org/html/rfc6749#section-4.1) for a web-based agent application.
+        //Now we can authenticate using the Authentication Client Library. We're following the Resource Owner Password Credentials Grant flow in this tutorial, but you would typically use Authorization Code Grant for a web-based agent application.
         String authUrl = String.format("%s/auth/v3", apiUrl);
         ApiClient authClient = new ApiClient();
         authClient.setBasePath(authUrl);

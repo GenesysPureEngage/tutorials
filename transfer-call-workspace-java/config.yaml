@@ -1,5 +1,5 @@
 title: Perform a two-step transfer
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to perform a two-step call transfer. This type of transfer happens when an agent is on a call with a customer and wants to consult with a third party before transferring the customer to that person. To handle this scenario, we'll initiate the transfer, which puts the existing call on hold and dials the third party for a consultation. We'll complete the process by transferring the original call to the third party.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to perform a two-step call transfer. This type of transfer happens when an agent is on a call with a customer and wants to consult with a third party before transferring the customer to that person. To handle this scenario, we'll initiate the transfer, which puts the existing call on hold and dials the third party for a consultation. We'll complete the process by transferring the original call to the third party.
 categories: 
   - workspace
 displayName: Java

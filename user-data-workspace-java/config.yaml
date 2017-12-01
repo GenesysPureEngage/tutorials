@@ -1,5 +1,5 @@
 title: Attach, update, and delete user data
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to create, update, and delete user data for a call.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to create, update, and delete user data for a call.
 categories: 
   - workspace
 displayName: Java

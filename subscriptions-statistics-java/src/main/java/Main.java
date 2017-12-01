@@ -23,15 +23,15 @@ public class Main
 
 	public static void main(String[] args) throws Exception
 	{
-		//region creating Statistics
-		//Creating a Statistics object with the apiKey, apiUrl
+		//region Create an instance of Statistics
+		//First we need to create a new instance of the Statistics class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these from your PureEngage Cloud representative.
 		String apiKey = "<apiKey>";
 		String apiUrl = "<apiUrl>";
 		Statistics api = new Statistics(apiKey, apiUrl);
 		//endregion
 
 		//region Authentication
-		//Obtaining authentication token
+		//Use the Authentication Client Library to get an authentication token.
 		String authUrl = String.format("%s/auth/v3", apiUrl);
 		ApiClient authClient = new ApiClient();
 		authClient.setBasePath(authUrl);
@@ -53,8 +53,8 @@ public class Main
 		logger.info("Initializing (token: {})", token);
 		//endregion
 
-		//region Registering notifications handlers
-		//Here we register handlers for Service State (onServiceChange) and Statistics Update (onValues) notifications.
+		//region Register notifications handlers
+		//Here we register handlers for ServiceState (`onServiceChange`) and StatisticValueNotification (`onValues`) notifications.
 		api.addListener(new Statistics.StatisticsListener()
 		{
 			@Override
@@ -70,8 +70,8 @@ public class Main
 			}
 		});
 
-		//region Initializing Statistics
-		//Initializing Statistics with a obtained earlier authentication token
+		//region Initialize Statistics
+		//Initialize Statistics with the authentication token we received earlier.
 		Future<Void> future = api.initialize(token);
 
 		try
@@ -79,10 +79,10 @@ public class Main
 			future.get(30, TimeUnit.SECONDS);
 			//endregion
 
-			//region Creating subscriptions
-			//There we use agent's username as objectId. The objectId for agent is employeeId. Usually it's equal to username, but it can be configured (in config server) to have different value.
+			//region Create a subscription
+			//Now we use the agent's username as the objectId. The objectId for an agent is the employeeId, which is usually also the agent' username. However, you can configure the employeeId in Configuration Server to have a different value.
 
-			//Creating statistic to report current agent state
+			//Create a statistic to report the current agent state
 			HashMap<String, Object> agentStateDefinition = new HashMap<>();
 			agentStateDefinition.put("notificationMode", "Immediate");
 			agentStateDefinition.put("category", "CurrentState");
@@ -90,21 +90,21 @@ public class Main
 			agentStateDefinition.put("mainMask", "*");
 			StatisticDesc currentAgentStateStat = new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", agentStateDefinition);
 
-			//Creating statistic to report time in current State
+			//Create a statistic to report the amount of time the agent has spent in the current state
 			HashMap<String, Object> timeInCurrentStateDefinition = new HashMap<>();
 			timeInCurrentStateDefinition.put("category", "CurrentTime");
 			timeInCurrentStateDefinition.put("mainMask", "*");
-			//please note that we use 5 (seconds) as notificationFrequency. This is done for tutorial purpose only.
-			//In production applications it's recommended to use higher values (60 or more) to avoid unnecessary notifications.
+			//Note: We use 5 (seconds) as the notificationFrequency. This is done for tutorial purposes only.
+			//In production applications, Genesys recommends using higher values (60 or more) to avoid unnecessary notifications.
 			timeInCurrentStateDefinition.put("notificationFrequency", 5);
-			//please note, here we use 0 as value for insensitivity to ensure retrieving values of statistic even in case when
-			//agent is not logged in on any dn and there is no activity with agent.
-			//In production applications it's recommended to use insensitivity 1 or more, to avoid unnecessary notifications
+			//Note: Here we use 0 as the value for insensitivity to ensure values are returned for statistics even when the
+			//agent is not logged in on any DN and there is no activity with the agent.
+			//In production applications, Genesys recommends setting the insensitivity value to 1 or more to avoid unnecessary notifications.
 			timeInCurrentStateDefinition.put("insensitivity", 0);
 			timeInCurrentStateDefinition.put("notificationMode", "Periodical");
 			timeInCurrentStateDefinition.put("subject", "DNStatus");
 
-			//Creating subscription
+			//Create the subscription
 			StatisticDesc timeInCurrentStateStat = new StatisticDesc(UUID.randomUUID().toString(), agentUsername, "Agent", timeInCurrentStateDefinition);
 			StatisticDesc[] statistics = new StatisticDesc[] {
 				currentAgentStateStat,
@@ -119,13 +119,12 @@ public class Main
 			logger.info("{}", subscription);
 
 			//region Statistics notifications
-			//Waiting for statistics update, if agent state is changed we will receive notifications, also we will receive
-			//periodical notifications of value of timeInCurrentState
-			//Thread.sleep is used for tutorial purposes only.
+			//Wait for a statistics update. If the agent state is changed, we'll receive a notification. We'll also get periodic notifications about the value of timeInCurrentState. Thread.sleep is used for tutorial purposes only.
 			Thread.sleep(60000);
 			//endregion
 
 			//region Subscription cleanup
+			//Delete the subscription.
 			api.deleteSubscription(subscriptionId);
 			//endregion
 
@@ -141,7 +140,7 @@ public class Main
 		}
 
 		//region Cleanup
-		//Closing our sessions
+		//Close our sessions.
 		api.destroy();
 		final String userAuth = String.format("Bearer %s", token);
 		authApi.signOut(userAuth, true);

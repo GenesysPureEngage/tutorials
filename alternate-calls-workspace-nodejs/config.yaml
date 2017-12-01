@@ -1,5 +1,5 @@
 title: Alternate between two calls
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to switch between two calls when one call is held and the other is established.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to switch between two calls when one call is held and the other is established.
 categories: 
   - workspace
 displayName: Node.Js

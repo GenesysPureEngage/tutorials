@@ -1,5 +1,5 @@
 title: Change agent state to Ready
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to change an agent's state to Ready.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to change an agent's state to Ready.
 categories: 
   - workspace
 displayName: Java
