@@ -1,5 +1,5 @@
 title: Search for targets
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to search for a target based on a key word.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to search for a target based on a key word.
 categories: 
   - workspace
 displayName: Node.Js

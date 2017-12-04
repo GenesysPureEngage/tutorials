@@ -17,13 +17,13 @@
     const clientId = "<clientId>";
     const clientSecret = "<clientSecret>";
 
-    //region Instantiating Statistics
-    //Creating a Statistics object with the apiKey, apiUrl
+    //region Create an instance of Statistics
+    //First we need to create a new instance of the Statistics class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these from your PureEngage Cloud representative.
     const api = new Statistics(apiKey, apiUrl);
     //endregion
 
     //region Authentication
-    //Obtaining authentication token
+	//Use the Authentication Client Library to get an authentication token.
     const authApi = new Authorization.AuthenticationApi(client);
     const opts = {
         authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
@@ -45,8 +45,8 @@
         //endregion
         
         
-        //region Registering notifications handlers
-        //Here we register handlers for Service State (ServiceChange) and Statistics Update (Values) events.
+        //region Register notifications handlers
+		//Here we register handlers for ServiceState (`onServiceChange`) and StatisticValueNotification (`onValues`) notifications.
         api.on(api.SERVICE_CHANGE_EVENT, data => {
             logger.info(data);
         });
@@ -55,13 +55,13 @@
         });
         //endregion
 
-        //region Initializing Statistics
-        //Initializing Statistics with a obtained earlier authentication token
+        //region Initialize Statistics
+		//Initialize Statistics with the authentication token we received earlier.
          await api.initialize(token);
         //endregion
 
-        //region Creating subscriptions to existing agent statistics
-        //There we use agent's username as objectId. The objectId for agent is employeeId. Usually it's equal to username, but it can be configured (in config server) to have different value. 
+        //region Create a subscription
+		//Now we use the agent's username as the objectId. The objectId for an agent is the employeeId, which is usually also the agent' username. However, you can configure the employeeId in Configuration Server to have a different value.
         let descriptors = [
             { name: "CurrentAgentState", objectId: agentUsername, objectType: "Agent", statisticId: uuid() },
             { name: "TimeInCurrentState", objectId: agentUsername, objectType: "Agent", statisticId: uuid() }
@@ -72,15 +72,21 @@
         //endregion
 
         //region Statistics notifications
-        //Waiting for statistics update, if agent state is changed we will recieve notifications
+		//Wait for a statistics update. If the agent state is changed, we'll receive a notification. We'll also get periodic notifications about the value of timeInCurrentState. Thread.sleep is used for tutorial purposes only.
         await new Promise((resolve, reject) => setTimeout(resolve, 60000));
         //endregion
 
+        //region Subscription cleanup
+		//Delete the subscription.
         if(resp.data) {
             await api.deleteSubscription(resp.data.subscriptionId);
         }
-        
+        //endregion
+
+        //region Cleanup
+		//Close our sessions.
         authApi.signOut(token);
+        //endregion
     }
     catch(err) {
         logger.error(err);

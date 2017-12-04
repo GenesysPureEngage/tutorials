@@ -1,5 +1,5 @@
 title: Perform a two-step conference call
-description: This tutorial shows you how to use the [Workspace Client Library](https://developer.genhtcc.com/api/client-libraries/workspace/) to perform a two-step conference call. This type of conference happens when an agent is on a call with a customer and needs to bring in a third party. To handle this scenario, we'll initiate the conference, which puts the existing call on hold and dials the third party. When the consultation is over, we'll complete the conference and bring all the parties together in one call.
+description: This tutorial shows you how to use the [Workspace Client Library](/client-libraries/workspace/) to perform a two-step conference call. This type of conference happens when an agent is on a call with a customer and needs to bring in a third party. To handle this scenario, we'll initiate the conference, which puts the existing call on hold and dials the third party. When the consultation is over, we'll complete the conference and bring all the parties together in one call.
 categories: 
   - workspace
 displayName: Java

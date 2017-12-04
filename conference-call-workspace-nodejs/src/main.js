@@ -88,7 +88,7 @@ authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
     return accessToken;
 }).then(token => {
     //region Initialization
-    //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the [Authentication Client Library](https://developer.genhtcc.com/api/client-libraries/authentication/index.html) when you follow the [Resource Owner Password Credentials Grant](https://tools.ietf.org/html/rfc6749#section-4.3) flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
+    //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
     return workspaceApi.initialize({token: token}).then(() => {
         return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
     });
