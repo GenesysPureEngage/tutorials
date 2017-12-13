@@ -1,12 +1,8 @@
 
-import com.genesys.internal.authentication.api.AuthenticationApi;
-import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
-import com.genesys.internal.common.ApiClient;
 import com.genesys.workspace.WorkspaceApi;
 import com.genesys.workspace.common.WorkspaceApiException;
 import com.genesys.workspace.models.Call;
 import com.genesys.workspace.models.User;
-import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 public class Main {
@@ -79,26 +75,15 @@ public class Main {
         });
         //endregion
         
-        String authUrl = String.format("%s/auth/v3", apiUrl);
-        ApiClient authClient = new ApiClient();
-        authClient.setBasePath(authUrl);
-        authClient.addDefaultHeader("x-api-key", apiKey);
-        authClient.getHttpClient().setFollowRedirects(false);
-
-        AuthenticationApi authApi = new AuthenticationApi(authClient);
-
-        String agentUsername = "<agentUsername2>";
-        String agentPassword = "<agentPassword2>";
-        String clientId = "<clientId>";
-        String clientSecret = "<clientSecret>";
-
-        String authorization = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
-        DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", authorization, "application/json", "*", clientId, null, agentUsername, agentPassword);
+        //region Authorization code grant
+        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        String authorizationToken = "<authorizationToken2>";
+        //endregion
 
         //region Initialization
         //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         System.out.println("Initializing workspace");
-        User user = api.initialize(resp.getAccessToken()).get();
+        User user = api.initialize(authorizationToken).get();
 
         System.out.println("Activating channels");
         api.activateChannels(user.getAgentId(), user.getAgentId());

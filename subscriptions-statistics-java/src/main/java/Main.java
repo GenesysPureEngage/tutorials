@@ -1,21 +1,16 @@
-import com.genesys.internal.authentication.api.AuthenticationApi;
-import com.genesys.internal.authentication.model.DefaultOAuth2AccessToken;
-import com.genesys.internal.common.ApiClient;
 import com.genesys.internal.statistics.model.StatisticDataResponse;
 import com.genesys.statistics.ServiceState;
 import com.genesys.statistics.StatisticDesc;
 import com.genesys.statistics.StatisticValueNotification;
 import com.genesys.statistics.Statistics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main
 {
@@ -29,29 +24,13 @@ public class Main
 		String apiUrl = "<apiUrl>";
 		Statistics api = new Statistics(apiKey, apiUrl);
 		//endregion
+                
+                String agentUsername = "<agentUsername>";
 
-		//region Authentication
-		//Use the Authentication Client Library to get an authentication token.
-		String authUrl = String.format("%s/auth/v3", apiUrl);
-		ApiClient authClient = new ApiClient();
-		authClient.setBasePath(authUrl);
-		authClient.addDefaultHeader("x-api-key", apiKey);
-		authClient.getHttpClient().setFollowRedirects(false);
-
-		logger.info("Retrieving token");
-		AuthenticationApi authApi = new AuthenticationApi(authClient);
-
-		String agentUsername = "<agentUsername>";
-		String agentPassword = "<agentPassword>";
-		String clientId = "<clientId>";
-		String clientSecret = "<clientSecret>";
-
-		String clientAuth = "Basic " + new String(Base64.getEncoder().encode(String.format("%s:%s", clientId, clientSecret).getBytes()));
-		DefaultOAuth2AccessToken resp = authApi.retrieveToken("password", clientAuth, "application/json", "*", clientId, null, agentUsername, agentPassword);
-
-		String token = resp.getAccessToken();
-		logger.info("Initializing (token: {})", token);
-		//endregion
+		//region Authorization code grant
+                //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+                String authorizationToken = "<authorizationToken>";
+                //endregion
 
 		//region Register notifications handlers
 		//Here we register handlers for ServiceState (`onServiceChange`) and StatisticValueNotification (`onValues`) notifications.
@@ -72,7 +51,7 @@ public class Main
 
 		//region Initialize Statistics
 		//Initialize Statistics with the authentication token we received earlier.
-		Future<Void> future = api.initialize(token);
+		Future<Void> future = api.initialize(authorizationToken);
 
 		try
 		{
@@ -142,8 +121,6 @@ public class Main
 		//region Cleanup
 		//Close our sessions.
 		api.destroy();
-		final String userAuth = String.format("Bearer %s", token);
-		authApi.signOut(userAuth, true);
 		//endregion
 	}
 }
