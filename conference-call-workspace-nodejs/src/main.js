@@ -1,5 +1,4 @@
 const workspace = require('genesys-workspace-client-js');
-const authorization = require('genesys-authorization-client-js');
 
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";
@@ -59,42 +58,17 @@ workspaceApi.on('CallStateChanged', msg => {
 });
 //endregion
 
-const client = new authorization.ApiClient();
-client.basePath = `${apiUrl}/auth/v3`;
-client.defaultHeaders = {'x-api-key': apiKey};
-client.enableCookies = true;
-const authApi = new authorization.AuthenticationApi(client);
+//region Authorization code grant
+//Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+const authorizationToken = "<authorizationToken2>";
+//endregion
 
-const agentUsername = "<agentUsername2>";
-const agentPassword = "<agentPassword2>";
-const clientId = "<clientId>";
-const clientSecret = "<clientSecret>";
-
-const opts = {
-    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
-    clientId: clientId,
-    scope: '*',
-    username: agentUsername,
-    password: agentPassword
-};
-    
-authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
-    const data = resp.response.body;
-    const accessToken = data.access_token;
-    if(!accessToken) {
-        throw new Error('Cannot get access token');
-    }
-    
-    return accessToken;
-}).then(token => {
-    //region Initialization
-    //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
-    return workspaceApi.initialize({token: token}).then(() => {
-        return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
-    });
-    //endregion
-})
-.catch(console.error);
+//region Initialization
+//Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
+workspaceApi.initialize({token: authorizationToken}).then(() => {
+    return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
+}).catch(console.error);
+//endregion
 
 console.log('Waiting for completion');
 

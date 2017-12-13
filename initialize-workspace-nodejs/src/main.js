@@ -1,5 +1,4 @@
 const workspace = require('genesys-workspace-client-js');
-const authorization = require('genesys-authorization-client-js');
 
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";
@@ -9,45 +8,19 @@ const apiUrl = "<apiUrl>";
 const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
-const client = new authorization.ApiClient();
-client.basePath = `${apiUrl}/auth/v3`;
-client.defaultHeaders = {'x-api-key': apiKey};
-client.enableCookies = true;
+//region Authorization code grant
+//Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+const authorizationToken = "<authorizationToken>";
+//endregion
 
-const agentUsername = "<agentUsername>";
-const agentPassword = "<agentPassword>";
-const clientId = "<clientId>";
-const clientSecret = "<clientSecret>";
-
-//region Authentication
-//Now we can authenticate using the Authentication Client Library. We're following the Resource Owner Password Credentials Grant flow in this tutorial, but you would typically use Authorization Code Grant for a web-based agent application.
-const authApi = new authorization.AuthenticationApi(client);
-const opts = {
-    authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
-    clientId: clientId,
-    scope: '*',
-    username: agentUsername,
-    password: agentPassword
-};
-    
-authApi.retrieveTokenWithHttpInfo("password", opts).then(resp => {
-    const data = resp.response.body;
-    const accessToken = data.access_token;
-    if(!accessToken) {
-        throw new Error('Cannot get access token');
-    }
-    
-    return accessToken;
-}).then(token => {
-    //region Initialization
-    //Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. After initialization, get the current user.
-    workspaceApi.initialize({token: token}).then(data => {
-        console.log(workspaceApi.user);
-        console.log('done');
-        workspaceApi.destroy();
-    });
-    //endregion
+//region Initialization
+//Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. After initialization, get the current user.
+workspaceApi.initialize({token: authorizationToken}).then(data => {
+    console.log(workspaceApi.user);
+    console.log('done');
+    workspaceApi.destroy();
 }).catch(console.error);
+//endregion
 
 
 

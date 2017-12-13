@@ -10,7 +10,7 @@
   ],
   "contributors": [],
   "dependencies": {
-    "genesys-provisioning-client-js": "1.0.228"
+    "genesys-provisioning-client-js": "latest"
   },
   "main": "src/main.js"
 }

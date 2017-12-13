@@ -1,5 +1,4 @@
 (async function() {
-    const Authorization = require('genesys-authorization-client-js');
     const Statistics = require('genesys-statistics-client-js');
     const uuid = require('uuid/v4');
     const logger = require('winston');
@@ -7,43 +6,18 @@
     const apiKey = "<apiKey>";
     const apiUrl = "<apiUrl>";
 
-    const client = new Authorization.ApiClient();
-    client.basePath = `${apiUrl}/auth/v3`;
-    client.defaultHeaders = {'x-api-key': apiKey};
-    client.enableCookies = true;
-
-    const agentUsername = "<agentUsername>";
-    const agentPassword = "<agentPassword>";
-    const clientId = "<clientId>";
-    const clientSecret = "<clientSecret>";
-
     //region Create an instance of Statistics
     //First we need to create a new instance of the Statistics class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). You can get the values for both of these from your PureEngage Cloud representative.
     const api = new Statistics(apiKey, apiUrl);
     //endregion
 
-    //region Authentication
-	//Use the Authentication Client Library to get an authentication token.
-    const authApi = new Authorization.AuthenticationApi(client);
-    const opts = {
-        authorization: "Basic " + new Buffer(`${clientId}:${clientSecret}`).toString("base64"),
-        clientId: clientId,
-        scope: '*',
-        username: agentUsername,
-        password: agentPassword
-    };
-    
     try {    
-        let resp = await authApi.retrieveTokenWithHttpInfo("password", opts);
-        const data = resp.response.body;
-        const token = data.access_token;
-        if(!token) {
-            throw new Error('Cannot get access token');
-        }
-
-        logger.info(`token: ${token}`);
-        //endregion
+        const agentUsername = "<agentUsername>";
         
+        //region Authorization code grant
+        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        const authorizationToken = "<authorizationToken>";
+        //endregion
         
         //region Register notifications handlers
 		//Here we register handlers for ServiceState (`onServiceChange`) and StatisticValueNotification (`onValues`) notifications.
@@ -57,7 +31,7 @@
 
         //region Initialize Statistics
 		//Initialize Statistics with the authentication token we received earlier.
-         await api.initialize(token);
+         await api.initialize(authorizationToken);
         //endregion
 
         //region Create a subscription
@@ -81,11 +55,6 @@
         if(resp.data) {
             await api.deleteSubscription(resp.data.subscriptionId);
         }
-        //endregion
-
-        //region Cleanup
-		//Close our sessions.
-        authApi.signOut(token);
         //endregion
     }
     catch(err) {
