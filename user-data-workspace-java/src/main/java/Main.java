@@ -94,7 +94,7 @@ public class Main {
 
         //region Authorization code grant
         //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
-        String authorizationToken = "<authorizationToken>";
+        String authorizationToken = "<authorizationToken1>";
         //endregion
         
         //region Initialization
