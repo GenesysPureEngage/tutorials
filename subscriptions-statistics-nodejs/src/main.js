@@ -16,7 +16,7 @@
         
         //region Authorization code grant
         //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
-        const authorizationToken = "<authorizationToken>";
+        const authorizationToken = "<authorizationToken1>";
         //endregion
         
         //region Register notifications handlers
