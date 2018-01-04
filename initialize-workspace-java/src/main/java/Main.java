@@ -18,7 +18,7 @@ public class Main {
         
         //region Initialization
         //Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. This returns the current user, which we then print.
-        User user = api.initialize(authorizationToken).get();
+        User user = api.initialize(authorizationToken);
         System.out.println("The workspace api is now successfully initialized");
         System.out.println("User data: " + user); 
         //endregion
