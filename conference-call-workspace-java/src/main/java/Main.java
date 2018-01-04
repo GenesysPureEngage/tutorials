@@ -83,7 +83,7 @@ public class Main {
         //region Initialization
         //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         System.out.println("Initializing workspace");
-        User user = api.initialize(authorizationToken).get();
+        User user = api.initialize(authorizationToken);
 
         System.out.println("Activating channels");
         api.activateChannels(user.getAgentId(), user.getAgentId());
