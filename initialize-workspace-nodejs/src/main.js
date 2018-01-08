@@ -9,12 +9,12 @@ const workspaceApi = new workspace(apiKey, apiUrl);
 //endregion
 
 //region Authorization code grant
-//Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+//You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
 const authorizationToken = "<authorizationToken1>";
 //endregion
 
 //region Initialization
-//Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. After initialization, get the current user.
+//Initialize the Workspace API with the authorization token from the previous step. After initialization, get the current user.
 workspaceApi.initialize({token: authorizationToken}).then(data => {
     console.log(workspaceApi.user);
     console.log('done');

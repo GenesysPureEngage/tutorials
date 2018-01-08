@@ -12,12 +12,12 @@ public class Main {
         //endregion
 
         //region Authorization code grant
-        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        //You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
         String authorizationToken = "<authorizationToken1>";
         //endregion
         
         //region Initialization
-        //Initialize the Workspace API by calling `initialize()` and passing **token**, which we received from the Authentication API. This returns the current user, which we then print.
+        //Initialize the Workspace API with the authorization token from the previous step. This returns the current user, which we then print.
         User user = api.initialize(authorizationToken);
         System.out.println("The workspace api is now successfully initialized");
         System.out.println("User data: " + user); 

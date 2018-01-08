@@ -13,13 +13,14 @@ public class Main {
         final String provisioningUrl = String.format("%s/provisioning/v3", apiUrl);
         
         //region Authorization code grant
-        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        //You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
         String authorizationToken = "<authorizationToken>";
         //endregion
         
         //region Create an instance of ApiClient
         //First we need to create a new instance of the ApiClient class and set properties using the **apiKey** (required to submit API requests) and **apiUrl** (base URL that provides access to the PureEngage Cloud APIs). 
-        //You can get the values for both of these from your PureEngage Cloud representative.        
+        //You can get the values for both of these from your PureEngage Cloud representative. 
+        //Don't forget to provide the authorization token from the previous step.      
         final ApiClient client = new ApiClient();
         client.setBasePath(provisioningUrl);
         client.addDefaultHeader("x-api-key", apiKey);

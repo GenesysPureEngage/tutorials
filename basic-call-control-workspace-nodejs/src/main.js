@@ -11,7 +11,7 @@ const workspaceApi = new workspace(apiKey, apiUrl);
 let callHasBeenHeld = false;
 
 //region Register event handlers
-//Now we can register event handlers that will be called whenever the Workspace Client Library publishes a CallStateChanged or DnStateChanged message. This let's us act on changes to the call state or DN state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, Held, or Released.
+//Now we can register event handlers that will be called whenever the Workspace Client Library publishes a CallStateChanged or DnStateChanged message. This lets us act on changes to the call state or DN state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, Held, or Released.
 workspaceApi.on('CallStateChanged', async msg => {
     let call = msg.call;
 
@@ -67,12 +67,12 @@ workspaceApi.on('DnStateChanged', async msg => {
 //endregion
 
 //region Authorization code grant
-//Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+//You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
 const authorizationToken = "<authorizationToken2>";
 //endregion
 
 //region Initialization
-//Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
+//Initialize the Workspace API with the authorization token from the previous step. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
 workspaceApi.initialize({token: authorizationToken}).then(() => {
     return workspaceApi.activateChannels(workspaceApi.user.employeeId, workspaceApi.user.agentLogin);
 }).catch(console.error);
