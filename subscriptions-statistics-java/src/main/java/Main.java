@@ -28,7 +28,7 @@ public class Main
                 String agentUsername = "<agentUsername>";
 
 		//region Authorization code grant
-                //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+                //You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
                 String authorizationToken = "<authorizationToken1>";
                 //endregion
 
@@ -50,7 +50,7 @@ public class Main
 		});
 
 		//region Initialize Statistics
-		//Initialize Statistics with the authentication token we received earlier.
+		//Initialize Statistics with the authorization token we received earlier.
 		Future<Void> future = api.initialize(authorizationToken);
 
 		try

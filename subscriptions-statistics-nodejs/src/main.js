@@ -15,7 +15,7 @@
         const agentUsername = "<agentUsername>";
         
         //region Authorization code grant
-        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        //You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
         const authorizationToken = "<authorizationToken1>";
         //endregion
         
@@ -30,7 +30,7 @@
         //endregion
 
         //region Initialize Statistics
-		//Initialize Statistics with the authentication token we received earlier.
+		//Initialize Statistics with the authorization token we received earlier.
          await api.initialize(authorizationToken);
         //endregion
 

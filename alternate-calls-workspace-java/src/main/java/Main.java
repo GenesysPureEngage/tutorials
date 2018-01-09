@@ -28,7 +28,7 @@ public class Main {
         //endregion
 
         //region Register event handler
-        //Now we can register an event handler that will be called whenever the Workspace Client Library publishes a CallStateChanged message. This let's us act on changes to the call state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, or Held. We've added logic here to alternate between the calls based on the call state.
+        //Now we can register an event handler that will be called whenever the Workspace Client Library publishes a CallStateChanged message. This lets us act on changes to the call state. Here we set up an event handler to act when it receives a CallStateChanged message where the call state is either Ringing, Established, or Held. We've added logic here to alternate between the calls based on the call state.
         api.voice().addCallEventListener(msg -> {
             try {
                 Call call = msg.getCall();
@@ -91,12 +91,12 @@ public class Main {
         //endregion
         
         //region Authorization code grant
-        //Authorization code should be obtained before (See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app)
+        //You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
         String authorizationToken = "<authorizationToken3>";
         //endregion
 
         //region Initialization
-        //Initialize the Workspace API by calling `initialize()` and passing **token**, which is the access token provided by the Authentication Client Library when you follow the Resource Owner Password Credentials Grant flow. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
+        //Initialize the Workspace API with the authorization token from the previous step. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         System.out.println("Initializing workspace");
         User user = api.initialize(authorizationToken);
         
