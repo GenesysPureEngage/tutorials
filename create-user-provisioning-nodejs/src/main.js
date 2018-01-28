@@ -32,11 +32,13 @@ const usersApi = new provisioning.UsersApi(provisioningClient);
 //region Create a new user
 //Create a new user with the specified values.
 const user = {
-    userName: "<agentUsername>",
-    firstName: "<agentFirstName>",
-    lastName: "<agentLastName>",
-    password: "<agentPassword>",
-    accessGroup: [ "<agentAccessGroup>" ]
+    data: {
+        userName: "<agentUsername>",
+        firstName: "<agentFirstName>",
+        lastName: "<agentLastName>",
+        password: "<agentPassword>",
+        accessGroup: ["<agentAccessGroup>"]
+    }
 };
 //endregion
 

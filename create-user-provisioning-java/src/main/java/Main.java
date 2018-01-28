@@ -2,6 +2,7 @@ import com.genesys.internal.common.ApiClient;
 import com.genesys.internal.provisioning.api.SessionApi;
 import com.genesys.internal.provisioning.api.UsersApi;
 import com.genesys.internal.provisioning.model.AddUserData;
+import com.genesys.internal.provisioning.model.AddUserDataData;
 import com.genesys.internal.provisioning.model.ApiSuccessResponse;
 import java.util.Arrays;
 
@@ -39,13 +40,13 @@ public class Main {
 
         //region Create a new user
         //Create a new user with the specified values.
-        AddUserData usersData = new AddUserData();
-        usersData.setUserName("<agentUsername>");
-        usersData.setPassword("<agentPassword>");
-        usersData.setFirstName("<agentFirstName>");
-        usersData.setLastName("<agentLastName>");
-        usersData.setAccessGroups(Arrays.asList("<agentAccessGroup>"));
-        ApiSuccessResponse resp = usersApi.addUser(usersData);
+        AddUserDataData data = new AddUserDataData();
+        data.setUserName("<agentUsername>");
+        data.setPassword("<agentPassword>");
+        data.setFirstName("<agentFirstName>");
+        data.setLastName("<agentLastName>");
+        data.setAccessGroups(Arrays.asList("<agentAccessGroup>"));
+        ApiSuccessResponse resp = usersApi.addUser(new AddUserData().data(data));
         if (resp.getStatus().getCode().equals(0)) {
             System.out.println("user created");
         } 
