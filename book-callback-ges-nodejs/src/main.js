@@ -30,7 +30,7 @@ async function bookCallback() {
     // The header parameter 'Content-Type' must be application/json.
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all the requests to PureEngage Cloud APIs
     const requestOptions = {
-        uri: API_BASEPATH + '/interactions/v1/callbacks/',
+        uri: API_BASEPATH + '/interactions/v3/callbacks/',
         method: 'POST',
         body: bodyData,
         headers: {
