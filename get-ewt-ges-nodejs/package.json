@@ -1,0 +1,17 @@
+{
+  "name": "get-ewt-ges-nodejs",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "contributors": [],
+  "dependencies": {
+    "request": "latest",
+    "request-promise": "latest"
+  },
+  "main": "src/main.js"
+}
