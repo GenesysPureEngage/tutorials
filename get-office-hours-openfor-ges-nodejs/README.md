@@ -1,20 +1,20 @@
-# Get Office Hours Open For time
+# Get Office Hours "Open For" Time
 
-This Tutorial shows you how to use GES Office Hours API to get information on how long the office will remain open for so that callbacks can be scheduled appropriately. The API considers regular office hours, holidays and any other exceptions configured.
+This tutorial shows how to use the GES Office Hours API to get information on how long the office will remain open so that your application can schedule callbacks appropriately. The API takes into account regular office hours, holidays, and any other configured exceptions.
 
 ## Getting Started
 
 ### Prerequisites
 
-Install nodejs
+Install nodejs.
 
-### Installing
+### Installation
 
-Clone or download the repository
+Clone or download the repository.
 
-## Running
+## Running the Sample
 
-1. Using shell or command line, navigate to the package.json location.
-2. Execute "npm install" to install dependent packages from npm.
-3. Assign valid values to the constants in ./src/main.js
-4. Execute "node ./src/main.js"
+1. Using a shell or command line, navigate to the directory that contains the `package.json` file.
+2. Execute `npm install` to install package dependencies.
+3. Edit the `./src/main.js` file and assign valid values to the constants.
+4. Execute `node ./src/main.js` to launch the sample.

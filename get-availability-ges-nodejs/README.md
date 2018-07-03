@@ -1,20 +1,20 @@
 # Get Availability
 
-This Tutorial shows you how to use GES Availability API to get the available time slots within a given period. The information retrieved can be used to book a scheduled callback for the desired available time slot. The API determines the available slots information by using the period information in the request, the configured Business Hours Service for Callback Service and the existing callback records. If Business Hours Service is not configured then, it simply uses the period information and the existing callback records.
+This tutorial shows how to use the GES Availability API to get available time slots within a given period. Using this information, you can book a scheduled callback for one of the returned time slots. The API determines the available time slot information by using the period information specified in the request, the Business Hours Service configured for the Callback Service, and the list of existing callback records. If you do not configure a Business Hours Service, the API determines the list of time slots according to the specified period information and the existing callback records.
 
 ## Getting Started
 
 ### Prerequisites
 
-Install nodejs
+Install nodejs.
 
-### Installing
+### Installation
 
-Clone or download the repository
+Clone or download the repository.
 
-## Running
+## Running the Sample
 
-1. Using shell or command line, navigate to the package.json location.
-2. Execute "npm install" to install dependent packages from npm.
-3. Assign valid values to the constants in ./src/main.js
-4. Execute "node ./src/main.js"
+1. Using a shell or command line, navigate to the directory that contains the `package.json` file.
+2. Execute `npm install` to install package dependencies.
+3. Edit the `./src/main.js` file and assign valid values to the constants.
+4. Execute `node ./src/main.js` to launch the sample.

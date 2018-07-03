@@ -1,19 +1,31 @@
 const request = require('request-promise');
-  
-const API_BASEPATH = '<API Base path e.g. http://localhost:8080>';
+//region Edit constants
+// Note:You must provision a Callback execution service and an associated Office Hours 
+// service in Platform Administrator.
+// Start by editing the sample's constants:
+// API_BASEPATH is the base URL used to access PureEngage Cloud APIs. 
+// API_KEY is the API key provided by Genesys that you must use with all the requests
+// to PureEngage Cloud APIs.
+const API_BASEPATH = '<API Base path. For example, http://localhost:8080>';
 const API_KEY = '<API Key>';
 const OFFICEHOURS_SERVICE = '<Office hours service name>';
 const OPENFOR_API_PATH =  '/interactions/v3/callbacks/openfor/' + OFFICEHOURS_SERVICE;
+//endregion
 
 async function getOfficeHoursOpenFor() {
 
     //region Create the request options.
-    // Here we create the options to be sent as part of the request. This may vary slightly according to the client module ( we are using request-promise ) used for making the HTTP request.
-    // In the options we specify the API url, method as GET and the header parameters.
-    // The Office Hours service to get office hours for is specified in the URL. The Office Hours service is configured in Platform Administrator.
-    // The header parameter 'Content-Type' must be application/json.
-    // The header parameter 'x-api-key' is the API key provided by Genesys to use with all the requests to PureEngage Cloud APIs
-    // Detailed description of the request parameters can be found at <TODO: API documentation link>
+    // Create the options that are sent as part of the request. These options might vary 
+    // slightly according to the client module that is used to handle the HTTP request 
+    // (request-promise in this example).
+    // In the options, specify the API URL, the method as GET, and the header parameters.
+    // The Office Hours service used to query open hours is part of the URL.
+    // The header parameter 'Content-Type' must be 'application/json'.
+    // The header parameter 'x-api-key' is the API key provided by Genesys to use with all the 
+    // requests to PureEngage Cloud APIs. 
+    // Additional parameters are available to create a callback. You can find the list of 
+    // these optional parameters and detailed descriptions in the GES API Reference:
+    // https://developer.genhtcc.com/reference/ges/Availability/index.html#openFor
     const options = {
       method: `GET`,
       uri: API_BASEPATH + OPENFOR_API_PATH,
@@ -26,7 +38,8 @@ async function getOfficeHoursOpenFor() {
     //endregion
 
     //region Send the request
-    // Send the request and parse the results
+    // Send the request and parse the results.
+    // Congratulations, you are done!
     try {
         const response = await request(options);
         if (!response) {
