@@ -2,7 +2,7 @@ const request = require('request-promise');
 //region Edit constants
 // First, edit the sample's constants: 
 // API_BASEPATH is the base URL used to access PureEngage Cloud APIs. 
-// SERVICE_NAME is the name of the Callback service that you need 
+// SERVICE_NAME is the name of the Callback execution service that you need 
 // to provision in Platform Administrator.
 // START is the start time used to look for availability.
 // API_KEY is the API key provided by Genesys that you must use with 
@@ -10,7 +10,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path; for example, http://localhost:8080>';
 const API_KEY = '<API Key>';
 const SERVICE_NAME = '<Callback execution service name>';
-const AVAILABILITY_API_PATH =  '/interactions/v3/callbacks/availability/' + SERVICE_NAME;
+const AVAILABILITY_API_PATH =  '/engagement/v3/callbacks/availability/' + SERVICE_NAME;
 const START = '<Start time. For example, 2018-06-10T25:05:00.000Z in ISO 8601; format yyyy-MM-ddTHH:mm:ss.SSSZ using UTC as the timezone>';
 //endregion
 async function getAvailability() {
@@ -24,9 +24,9 @@ async function getAvailability() {
     // and the header parameters.
     // The 'start' query parameter is the start time to look for available slots. If
     // not specified, it is assumed to be now.
-    // The 'number-of-days' query parameter is the number of days in the future to look
+    // The 'numberOfDays' query parameter is the number of days in the future to look
     // for availability from the start time (or from now if you do not specify a start time).
-    // The query parameter 'max-time-slots' controls the maximum number of slots that 
+    // The query parameter 'maxTimeSlots' controls the maximum number of slots that 
     // the response will include.
     // The header parameter 'Content-Type' must be 'application/json'.
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all
@@ -39,8 +39,8 @@ async function getAvailability() {
         uri: API_BASEPATH + AVAILABILITY_API_PATH,
         qs: {
             'start': START,
-            'number-of-days': 7,
-            'max-time-slots': 5
+            'numberOfDays': 7,
+            'maxTimeSlots': 5
         },
         headers: {
             'Content-Type': 'application/json',

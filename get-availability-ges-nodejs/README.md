@@ -8,6 +8,8 @@ This tutorial shows how to use the GES Availability API to get available time sl
 
 Install nodejs.
 
+Get Genesys PureEngage API key.
+
 ### Installation
 
 Clone or download the repository.

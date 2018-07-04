@@ -9,7 +9,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path. For example, http://localhost:8080>';
 const API_KEY = '<API Key>';
 const OFFICEHOURS_SERVICE = '<Office hours service name>';
-const OPENFOR_API_PATH =  '/interactions/v3/callbacks/openfor/' + OFFICEHOURS_SERVICE;
+const OPENFOR_API_PATH =  '/engagement/v3/callbacks/openfor/' + OFFICEHOURS_SERVICE;
 //endregion
 
 async function getOfficeHoursOpenFor() {
@@ -46,7 +46,7 @@ async function getOfficeHoursOpenFor() {
             console.log('Invalid null or undefined response.');
             return;
         }
-        console.log('Office is open for : ' + response.data.open_for + ' seconds' );
+        console.log('Office is open for : ' + response.data.openFor + ' seconds' );
     }
     catch (error) {
         console.log('Failed to get office hours. Error : ' + error);

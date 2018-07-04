@@ -8,6 +8,8 @@ This tutorial shows how to use the GES EWT API to get the Estimated Waiting Time
 
 Install nodejs.
 
+Get Genesys PureEngage API key.
+
 ### Installation
 
 Clone or download the repository.
