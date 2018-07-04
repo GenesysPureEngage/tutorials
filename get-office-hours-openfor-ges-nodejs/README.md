@@ -8,6 +8,8 @@ This tutorial shows how to use the GES Office Hours API to get information on ho
 
 Install nodejs.
 
+Get Genesys PureEngage API key.
+
 ### Installation
 
 Clone or download the repository.

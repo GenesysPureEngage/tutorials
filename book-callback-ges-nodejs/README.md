@@ -8,6 +8,8 @@ This tutorial shows how to use the GES Callback API to book a callback and retri
 
 Install nodejs.
 
+Get Genesys PureEngage API key.
+
 ### Installation
 
 Clone or download the repository.
