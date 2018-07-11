@@ -9,7 +9,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path. For example, http://localhost:8080>';
 const API_KEY = '<API Key>';
 const OFFICEHOURS_SERVICE = '<Office hours service name>';
-const OPENFOR_API_PATH =  '/engagement/v3/callbacks/openfor/' + OFFICEHOURS_SERVICE;
+const OPENFOR_API_PATH =  '/engagement/v3/callbacks/open-for/' + OFFICEHOURS_SERVICE;
 //endregion
 
 async function getOfficeHoursOpenFor() {
