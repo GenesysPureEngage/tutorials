@@ -48,7 +48,7 @@ async function getEstimatedWaitTime() {
             console.log('Invalid null or undefined response.');
             return;
         }
-        console.log('Estimated Wait Time (EWT) in seconds : ' + response.data.ewt);
+        console.log('Estimated Wait Time (EWT) in seconds : ' + response.data.estimatedWaitTime);
     }
     catch (error) {
         console.log('Failed to get Estimated Wait Time (EWT). Error : ' + error);
