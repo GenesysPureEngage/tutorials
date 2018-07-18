@@ -9,7 +9,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path, for example http://localhost:8080>';
 const API_KEY = '<API Key>';
 const VQ_NAME = '<Virtual Queue (VQ) name>';
-const EWT_API_PATH = '/estimated-wait-time/v3/virtual-queues/' + VQ_NAME;
+const EWT_API_PATH = '/engagement/v3/estimated-wait-time/virtual-queues/' + VQ_NAME;
 //endregion
 
 async function getEstimatedWaitTime() {
