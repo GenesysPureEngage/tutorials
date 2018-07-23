@@ -31,7 +31,7 @@ async function bookCallback() {
     // If you provide the 'desiredTime' parameter, the system books a callback scheduled
     // for this particular time.
     // Additional parameters are available to create a callback. You will find the list of 
-    // these optional parameters and their detailed description in the GES API Reference
+    // these optional parameters and their detailed description in the Callback API Reference
     // here: https://developer.genhtcc.com/reference/ges/Callbacks/index.html#bookCallbackExternal
     let bodyData = JSON.stringify({
         'serviceName': SERVICE_NAME,

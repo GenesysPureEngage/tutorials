@@ -25,8 +25,8 @@ async function getEstimatedWaitTime() {
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all 
     // the requests to PureEngage Cloud APIs. 
     // Additional parameters are available to get the Estimated Waiting Time. You can find
-    // the list of these optional parameters and detailed descriptions in the GES 
-    // API Reference:
+    // the list of these optional parameters and detailed descriptions in the 
+    // Estimated Wait Time API Reference:
     // https://developer.genhtcc.com/reference/ges/EWT/index.html#ewtAPI1
     const options = {
         method: 'GET',
