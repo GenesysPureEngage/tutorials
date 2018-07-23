@@ -24,7 +24,7 @@ async function getOfficeHoursOpenFor() {
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all the 
     // requests to PureEngage Cloud APIs. 
     // Additional parameters are available to create a callback. You can find the list of 
-    // these optional parameters and detailed descriptions in the GES API Reference:
+    // these optional parameters and detailed descriptions in the Office Hours API Reference:
     // https://developer.genhtcc.com/reference/ges/Availability/index.html#openFor
     const options = {
       method: `GET`,

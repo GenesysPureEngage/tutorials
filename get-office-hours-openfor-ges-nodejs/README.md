@@ -1,6 +1,6 @@
 # Get Office Hours "Open For" Time
 
-This tutorial shows how to use the GES Office Hours API to get information on how long the office will remain open so that your application can schedule callbacks appropriately. The API takes into account regular office hours, holidays, and any other configured exceptions.
+This tutorial shows how to use the Office Hours API to get information on how long the office will remain open so that your application can schedule callbacks appropriately. The API takes into account regular office hours, holidays, and any other configured exceptions.
 
 ## Getting Started
 

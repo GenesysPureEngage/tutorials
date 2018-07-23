@@ -1,6 +1,6 @@
-# Get Estimated Waiting Time (EWT)
+# Get Estimated Wait Time (EWT)
 
-This tutorial shows how to use the GES EWT API to get the Estimated Waiting Time (EWT) before an agent becomes available and processes a call.
+This tutorial shows how to use the Estimated Wait Time (EWT) API to get the Estimated Wait Time before an agent becomes available and processes a call.
 
 ## Getting Started
 

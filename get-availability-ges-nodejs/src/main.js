@@ -32,7 +32,7 @@ async function getAvailability() {
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all
     // of your requests.    
     // Additional parameters are available to query agent availability. You can find the list of 
-    // these optional parameters and detailed descriptions in the GES API Reference:
+    // these optional parameters and detailed descriptions in the Callback API Reference:
     // https://developer.genhtcc.com/reference/ges/Availability/index.html#queryAvailabilityV2
     const options = {
         method: 'GET',
