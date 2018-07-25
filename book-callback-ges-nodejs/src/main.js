@@ -10,7 +10,7 @@ const API_BASEPATH = 'API Base path. For example: http://localhost:3005';
 const API_KEY = '<API Key>';
 const SERVICE_NAME = '<Callback execution service name>';
 const PHONE_NUMBER = '<Customer Phone Number including area code>';
-const DESIRED_TIME = '<Desired callback time. For example: 2018-06-10T22:05:00.000Z>';
+const DESIRED_TIME = '<Desired callback time in GMT. For example: 2018-06-10T22:05:00.000Z>';
 const CREATE_CALLBACK_API_PATH = '/engagement/v3/callbacks/create';
 //endregion
 
@@ -25,7 +25,7 @@ async function bookCallback() {
     // Tip: This service name is configured in Designer.
     // The 'phoneNumber' parameter is the customer's phone number that is used 
     // to call back.
-    // Note that if you book a callback with the service name and customer number only, 
+    // Note that if you book a callback with the service name and phone number only, 
     // the system books an immediate callback; it means that the callback is scheduled 
     // for the earliest available timeslot.
     // If you provide the 'desiredTime' parameter, the system books a callback scheduled
