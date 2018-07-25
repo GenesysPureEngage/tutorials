@@ -1,7 +1,7 @@
 const request = require('request-promise');
 //region Edit constants
 // Note:You must provision a Callback execution service and an associated Office Hours 
-// service in Platform Administrator.
+// service in Designer.
 // Start by editing the sample's constants:
 // API_BASEPATH is the base URL used to access PureEngage Cloud APIs. 
 // API_KEY is the API key provided by Genesys that you must use with all the requests
@@ -24,8 +24,7 @@ async function getOfficeHoursOpenFor() {
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all the 
     // requests to PureEngage Cloud APIs. 
     // Additional parameters are available to create a callback. You can find the list of 
-    // these optional parameters and detailed descriptions in the Office Hours API Reference:
-    // https://developer.genhtcc.com/reference/ges/Availability/index.html#openFor
+    // these optional parameters and detailed descriptions in the Office Hours API Reference.
     const options = {
       method: `GET`,
       uri: API_BASEPATH + OPENFOR_API_PATH,

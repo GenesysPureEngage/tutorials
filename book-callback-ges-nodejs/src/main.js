@@ -3,7 +3,7 @@ const request = require('request-promise');
 // Start by editing the sample's constants:
 // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
 // SERVICE_NAME is the name of the Callback execution service that you need 
-// to provision in Platform Administrator.
+// to provision in Designer.
 // API_KEY is the API key provided by Genesys that you must use with all the requests
 // to PureEngage Cloud APIs.
 const API_BASEPATH = 'API Base path. For example: http://localhost:3005';
@@ -22,7 +22,7 @@ async function bookCallback() {
     // mandatory to book a callback.
     // The 'serviceName' parameter is the name of the Callback execution service that 
     // is used to book the callback.
-    // Tip: This service name is configured in Platform Administrator.
+    // Tip: This service name is configured in Designer.
     // The 'phoneNumber' parameter is the customer's phone number that is used 
     // to call back.
     // Note that if you book a callback with the service name and customer number only, 
@@ -31,8 +31,7 @@ async function bookCallback() {
     // If you provide the 'desiredTime' parameter, the system books a callback scheduled
     // for this particular time.
     // Additional parameters are available to create a callback. You will find the list of 
-    // these optional parameters and their detailed description in the Callback API Reference
-    // here: https://developer.genhtcc.com/reference/ges/Callbacks/index.html#bookCallbackExternal
+    // these optional parameters and their detailed description in the Callbacks API Reference.
     let bodyData = JSON.stringify({
         'serviceName': SERVICE_NAME,
         'phoneNumber': PHONE_NUMBER,

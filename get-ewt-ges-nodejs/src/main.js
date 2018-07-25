@@ -26,8 +26,7 @@ async function getEstimatedWaitTime() {
     // the requests to PureEngage Cloud APIs. 
     // Additional parameters are available to get the Estimated Waiting Time. You can find
     // the list of these optional parameters and detailed descriptions in the 
-    // Estimated Wait Time API Reference:
-    // https://developer.genhtcc.com/reference/ges/EWT/index.html#ewtAPI1
+    // Estimated Wait Time API Reference.
     const options = {
         method: 'GET',
         uri: API_BASEPATH + EWT_API_PATH,

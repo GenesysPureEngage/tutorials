@@ -3,7 +3,7 @@ const request = require('request-promise');
 // First, edit the sample's constants: 
 // API_BASEPATH is the base URL used to access PureEngage Cloud APIs. 
 // SERVICE_NAME is the name of the Callback execution service that you need 
-// to provision in Platform Administrator.
+// to provision in Designer.
 // START is the start time used to look for availability.
 // API_KEY is the API key provided by Genesys that you must use with 
 // all the requests to PureEngage Cloud APIs.
@@ -32,8 +32,7 @@ async function getAvailability() {
     // The header parameter 'x-api-key' is the API key provided by Genesys to use with all
     // of your requests.    
     // Additional parameters are available to query agent availability. You can find the list of 
-    // these optional parameters and detailed descriptions in the Callback API Reference:
-    // https://developer.genhtcc.com/reference/ges/Availability/index.html#queryAvailabilityV2
+    // these optional parameters and detailed descriptions in the Availability API Reference.
     const options = {
         method: 'GET',
         uri: API_BASEPATH + AVAILABILITY_API_PATH,
