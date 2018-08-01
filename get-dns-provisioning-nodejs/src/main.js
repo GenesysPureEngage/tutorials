@@ -1,8 +1,6 @@
 const ProvisioningApi = require('genesys-provisioning-client-js');
 
 const apiKey = "<apiKey>";
-const username = "<username>";
-const password = "<password>";
 const apiUrl = "<apiUrl>";
 
 const provisioningUrl = `${apiUrl}/provisioning/v3`;
@@ -23,17 +21,15 @@ async function main() {
 	//Initialize the API using the authorization token (or authorization code)
 	await provisioningApi.initialize({token: authorizationToken});
 	//endregion
-
-	//region Create a new user
-	//Create a new user with the specified values.
-	const user = {
-		userName: "<agentUserName>",
-		firstName: "<agentFirstName>",
-		lastName: "<agentLastName>",
-		password: "<agentPassword>",
-		accessGroup: ['<agentAccessGroups>']
-	};
-	await provisioningApi.users.addUser(user);
+	
+	const dnDBIDs = ["<dnDBIDs>"];
+	//region Get Dns (Directory Numbers)
+	//Search for agent groups given the specified search parameters. 
+	//Extract the list of Dn objects from the Results object returned by the API.
+	const results = await provisioningApi.objects.getDns({
+		dbids: dnDBIDs
+	});
+	const dns = results.dns;
 	//endregion
 
 	//region Log Out
