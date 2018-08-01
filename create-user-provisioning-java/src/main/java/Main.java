@@ -14,7 +14,7 @@ public class Main {
         final String provisioningUrl = String.format("%s/provisioning/v3", apiUrl);
         
         //region Authorization code grant
-        //You'll need to use the Authentication API to get an authorization token. See [https://github.com/GenesysPureEngage/authorization-code-grant-sample-app Authorization] for an example of how to do this.
+        //You'll need to use the Authentication API to get an authorization token. See [Authorization] (https://github.com/GenesysPureEngage/authorization-code-grant-sample-app Authorization) for an example of how to do this.
         String authorizationToken = "<authorizationToken>";
         //endregion
         
