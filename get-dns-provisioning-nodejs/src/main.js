@@ -1,4 +1,4 @@
-const ProvisioningApi = require('genesys-provisioning-client-js');
+const ProvisioningApi = require('genesys-provisioning-client-js').ProvisioningApi;
 
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";

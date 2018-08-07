@@ -1,8 +1,6 @@
-const ProvisioningApi = require('genesys-provisioning-client-js');
+const ProvisioningApi = require('genesys-provisioning-client-js').ProvisioningApi;
 
 const apiKey = "<apiKey>";
-const username = "<username>";
-const password = "<password>";
 const apiUrl = "<apiUrl>";
 
 const provisioningUrl = `${apiUrl}/provisioning/v3`;

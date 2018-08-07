@@ -1,8 +1,6 @@
-const ProvisioningApi = require('genesys-provisioning-client-js');
+const ProvisioningApi = require('genesys-provisioning-client-js').ProvisioningApi;
 
 const apiKey = "<apiKey>";
-const username = "<username>";
-const password = "<password>";
 const apiUrl = "<apiUrl>";
 
 const provisioningUrl = `${apiUrl}/provisioning/v3`;
@@ -27,15 +25,15 @@ async function main() {
 	//region Create a new user
 	//Create a new user with the specified values.
 	const user = {
-		userName: "<agentUserName>",
-		firstName: "<agentFirstName>",
-		lastName: "<agentLastName>",
-		password: "<agentPassword>",
-		accessGroup: ['<agentAccessGroups>']
+		userName: "Agent-6",
+		firstName: "Agent",
+		lastName: "Agent",
+		password: "Agent123"
+		//accessGroup: ['<agentAccessGroups>']
 	};
 	await provisioningApi.users.addUser(user);
 	//endregion
-
+	
 	//region Log Out
 	//Log out of your Provisioning API session.
 	await provisioningApi.done();
