@@ -21,23 +21,25 @@ async function main() {
 	//Initialize the API using the authorization token (or authorization code)
 	await provisioningApi.initialize({token: authorizationToken});
 	//endregion
-
-	//region Create a new user
-	//Create a new user with the specified values.
-	const user = {
-		userName: "<userName>",
-		firstName: "<firstName>",
-		lastName: "<lastName>",
-		password: "<password>",
-		accessGroup: ['<agentAccessGroups>']
-	};
-	await provisioningApi.users.addUser(user);
+	
+	//region Get Users Async
+	//Get a list of users with the specified parameters. The users will be returned asynchronously through the callback argument.
+	await provisioningApi.operations.getUsers({
+		filterName : "FirstNameOrLastNameMatches",
+		filterParameters : "<agentFirstName>",
+		limit : 5
+	}, async (users) => {
+		
+		//Do something with users here
+		
+		//region Log Out
+		//Log out of your Provisioning API session.
+		await provisioningApi.done();
+		//endregion
+	});
 	//endregion
 	
-	//region Log Out
-	//Log out of your Provisioning API session.
-	await provisioningApi.done();
-	//endregion
+	
 }
 
 main().catch((e) => console.error(e));

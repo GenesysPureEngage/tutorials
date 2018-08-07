@@ -1,0 +1,16 @@
+{
+  "name": "get-users-async-provisioning-nodejs",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "contributors": [],
+  "dependencies": {
+    "genesys-provisioning-client-js": "latest"
+  },
+  "main": "src/main.js"
+}
