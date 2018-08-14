@@ -1,8 +1,8 @@
 import com.genesys.provisioning.ProvisioningApi;
+import com.genesys.provisioning.models.UserSearchParams;
 import com.genesys.provisioning.models.User;
-import com.genesys.provisioning.models.Person;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -18,7 +18,7 @@ public class Main {
         //endregion
         
         //region Create an instance of ProvisioningApi
-        //The ProvisioningApi object uses the base path for provisioning and your API key in its constructor.
+        //The ProvisioningAPi object uses the base path for provisioning and your API key in its constructor.
         ProvisioningApi provisioningApi = new ProvisioningApi(provisioningUrl, apiKey);
         //endregion
         
@@ -27,33 +27,14 @@ public class Main {
         provisioningApi.initializeWithToken(authorizationToken);
 		//endregion
 		
-        //region Create a new user
-        //Create a new user with the specified values. Then extract the user's DBID from the Person object returned.
-        User user = new User()
-        	.userName("<agentUserName>")
-        	.password("<agentPassword>")
-        	.firstName("<agentFirstName>")
-        	.lastName("<agentLastName>");
-       		.accessGroups(Arrays.asList("<agentAccessGroup>"));
-       	
-        Person personInfo = provisioningApi.users.addUser(user);
-        String DBID = personInfo.getDBID();
-        //endregion
-        
-        //region Update a user
-        //Updates the attributes of the user with the given DBID.
-        user.password("<newAgentPassword>")
-        	.firstName("<newAgentFirstName>")
-        	.lastName("<newAgentLastName>");
-       		.accessGroups(Arrays.asList("<newAgentAccessGroup>"));
-       	
-        provisioningApi.users.updateUser(DBID, user);
-        //endregion
-        
-        //region Delete a user
-        //Deletes the user with the given DBID.
-        provisioningApi.users.deleteUser(DBID, false);
-        //endregion
+		//region Get Users
+		//Get a list of users with the specified parameters.
+		List<User> users = provisioningApi.users.getUsers(new UserSearchParams()
+			.filterName("<filterName>")
+			.filterParameters("<filterParameters>")
+			.limit(5)
+		);
+		//endregion
 		
         //region Log out
         //Log out to end our Provisioning API session.

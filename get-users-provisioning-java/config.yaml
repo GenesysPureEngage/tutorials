@@ -1,0 +1,5 @@
+title: Get Users
+description: This tutorial shows you how to use the [Provisioning Client Library](/client-libraries/provisioning/) to search for users with given properties.
+categories: 
+  - provisioning
+displayName: Java
