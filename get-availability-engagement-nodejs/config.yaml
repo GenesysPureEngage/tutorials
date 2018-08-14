@@ -1,5 +1,5 @@
-title: Get Availability Tutorial
+title: Get Availability
 description: This Tutorial shows you how to use Availability API to get the available time slots within a given period. The information retrieved can be used to book a scheduled callback for the desired available time slot.
 categories: 
-  - callback
+  - engagement
 displayName: Node.Js
