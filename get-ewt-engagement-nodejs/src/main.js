@@ -9,7 +9,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path, for example http://localhost:8080>';
 const API_KEY = '<API Key>';
 const VQ_NAME = '<Virtual Queue (VQ) name>';
-const EWT_API_PATH = '/engagement/v3/estimated-wait-time/virtual-queues/' + VQ_NAME;
+const EWT_API_PATH = '/engagement/v3/estimated-wait-time?virtual-queues=' + VQ_NAME;
 //endregion
 
 async function getEstimatedWaitTime() {
@@ -47,7 +47,16 @@ async function getEstimatedWaitTime() {
             console.log('Invalid null or undefined response.');
             return;
         }
-        console.log('Estimated Wait Time (EWT) in seconds : ' + response.data.estimatedWaitTime);
+        console.log('Estimated Wait Time (EWT) response. Number of items in response array: ' + response.data.length);
+        response.data.forEach( (ewtItem, index) => {
+            // If there is a problem getting the Estimated Wait Time for a Virtual Queue then -1 is returned as the value of 'estimatedWaitTime' property.
+            // The 'message' property provides information about the error.
+            if( ewtItem.estimatedWaitTime >= 0 ) {
+                console.log('Response item index ' + index + ', Virtual Queue : ' + ewtItem.virtualQueue + ', Estimated Wait Time (EWT) in seconds : ' + ewtItem.estimatedWaitTime );
+            } else {
+                console.log('Response item index ' + index + ', Virtual Queue : ' + ewtItem.virtualQueue + ', Error Message : ' + ewtItem.message );
+            }
+        });
     }
     catch (error) {
         console.log('Failed to get Estimated Wait Time (EWT). Error : ' + error);
