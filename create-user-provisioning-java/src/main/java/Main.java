@@ -33,7 +33,7 @@ public class Main {
         	.userName("<agentUserName>")
         	.password("<agentPassword>")
         	.firstName("<agentFirstName>")
-        	.lastName("<agentLastName>");
+        	.lastName("<agentLastName>")
        		.accessGroups(Arrays.asList("<agentAccessGroup>"));
        	
         Person personInfo = provisioningApi.users.addUser(user);
@@ -44,7 +44,7 @@ public class Main {
         //Updates the attributes of the user with the given DBID.
         user.password("<newAgentPassword>")
         	.firstName("<newAgentFirstName>")
-        	.lastName("<newAgentLastName>");
+        	.lastName("<newAgentLastName>")
        		.accessGroups(Arrays.asList("<newAgentAccessGroup>"));
        	
         provisioningApi.users.updateUser(DBID, user);
