@@ -22,15 +22,18 @@ async function main() {
 	await provisioningApi.initialize({token: authorizationToken});
 	//endregion
 	
-	//region Get Users
-	//Get a list of users with the specified parameters.
-	const users = await provisioningApi.users.getUsers({
-		filterName : "FirstNameOrLastNameMatches",
-		filterParameters : "<agentFirstName>",
-		limit : 5
-	});
+	//region Get Options
+	//Get the options.
+	const options = (await provisioningApi.options.get("<personDBID>","<agentGroupDBID>","<application>")).options;
 	//endregion
-		
+	
+	options["<property>"] =  "<value>";
+	
+	//region Modify Options
+	//After the options object has been changed, update them using the API.
+	await provisioningApi.options.modify("<application>", options);
+	//endregion
+	
 	//region Log Out
 	//Log out of your Provisioning API session.
 	await provisioningApi.done();

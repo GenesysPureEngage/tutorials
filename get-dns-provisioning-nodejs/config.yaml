@@ -1,0 +1,5 @@
+title: Get DNs
+description: This tutorial shows you how to use the [Provisioning Client Library](/client-libraries/provisioning/) to get DN (Directory Number) objects given thier database IDs.
+categories: 
+  - provisioning
+displayName: NodeJS

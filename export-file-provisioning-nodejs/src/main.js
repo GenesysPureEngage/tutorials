@@ -1,4 +1,5 @@
 const ProvisioningApi = require('genesys-provisioning-client-js').ProvisioningApi;
+const Promise = require('Promise');
 
 const apiKey = "<apiKey>";
 const apiUrl = "<apiUrl>";
@@ -22,15 +23,43 @@ async function main() {
 	await provisioningApi.initialize({token: authorizationToken});
 	//endregion
 	
-	//region Get Users
-	//Get a list of users with the specified parameters.
-	const users = await provisioningApi.users.getUsers({
-		filterName : "FirstNameOrLastNameMatches",
-		filterParameters : "<agentFirstName>",
-		limit : 5
+	//region Export File
+	//Export the given file with the given fields and person DBIDs.
+	const exportId = await provisioningApi.export.exportFile({
+		fields:["<fielad>"],
+		fileName: "<fileName>",
+		personDBIDs: ["<DBIDs>"],
+		filterParameters: {
+			subResources: "<subResources>",
+			agentGroupFilter: ["<agentGroups"],
+			sortBy: ["<sortBy>"],
+			order: "Ascending"
+		}
 	});
 	//endregion
 		
+	//region Monitor Export
+	//The export can be monitored by calling getExportStatus each second and getting the export progress.
+	let progress = 0.0;
+	while(progress < 1.0) {
+		await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+		
+		let status = await provisioningApi.export.getStatus(exportId);
+		progress = status.progress;
+	}
+	//endregion
+	
+	//region File URL
+	//Once the export is done the download URL can be used to download the CSV file.
+	console.log("Done exporting. Download URL: " + provisioningApi.export.getDownloadUrl(exportId));
+	//endregion
+	
+	//region Download File
+	//We can use the ProvisioningApi to download the CSV file given its ID.
+	const csvFileContents = await provisioningApi.export.downloadExport(exportId);
+	//endregion
+	
+	
 	//region Log Out
 	//Log out of your Provisioning API session.
 	await provisioningApi.done();
