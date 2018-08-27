@@ -47,6 +47,7 @@ async function getEstimatedWaitTime() {
             console.log('Invalid null or undefined response.');
             return;
         }
+        console.log('Request status corrId : ' + response.status.corrId );
         console.log('Estimated Wait Time (EWT) response. Number of items in response array: ' + response.data.length);
         response.data.forEach( (ewtItem, index) => {
             // If there is a problem getting the Estimated Wait Time for a Virtual Queue then -1 is returned as the value of 'estimatedWaitTime' property.

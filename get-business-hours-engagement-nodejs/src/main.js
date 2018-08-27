@@ -45,6 +45,7 @@ async function getBusinessHoursOpenFor() {
             console.log('Invalid null or undefined response.');
             return;
         }
+        console.log('Request status corrId : ' + response.status.corrId );
         console.log('Business is open for : ' + response.data.openFor + ' seconds' );
     }
     catch (error) {
