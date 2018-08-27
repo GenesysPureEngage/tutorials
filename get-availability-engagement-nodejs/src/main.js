@@ -58,6 +58,7 @@ async function getAvailability() {
             console.log('Invalid null or undefined response.');
             return;
         }
+        console.log('Request status corrId : ' + response.status.corrId );
         console.log('Availability response. Duration Minutes : ' + response.data.durationMin + ', Timezone : ' + response.data.timezone + ', Number of slots: ' + response.data.slots.length);
         response.data.slots.forEach( (slot, index) => {
             console.log('Slot ' + index + ' : UTC time : ' + slot.utcTime + ', Local time : ' + slot.localTime  + ', Capacity : ' + slot.capacity + ', Total : ' + slot.total);

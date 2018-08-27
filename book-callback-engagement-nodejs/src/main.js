@@ -71,6 +71,7 @@ async function bookCallback() {
         }
 
         callbackResponse = JSON.parse(callbackResponse);
+        console.log('Request status corrId : ' + callbackResponse.status.corrId );
         console.log('Successfully booked callback with id : ' + callbackResponse.data.id );
 
     } catch (error) {
