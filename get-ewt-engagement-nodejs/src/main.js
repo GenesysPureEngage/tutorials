@@ -2,14 +2,14 @@ const request = require('request-promise');
 //region Edit constants
 // Note: You must configure a Virtual Queue in Platform Administrator.
 // Start by editing the sample's constants:
-// API_BASEPATH is the base URL of the PureEngage Cloud APIs. 
-// VQ_NAME is the name of the Virtual Queue that is used to get the Estimated Wait Time (EWT).
+// API_BASEPATH is the base URL of the PureEngage Cloud APIs.
+// COMMA_SEPARATED_VQ_NAMES is the comma separated list of the Virtual Queue names for which Estimated Wait Time (EWT) is required.
 // API_KEY is the API key provided by Genesys that you must use with all the requests
-// to PureEngage Cloud APIs. 
+// to PureEngage Cloud APIs.
 const API_BASEPATH = '<API Base path, for example http://localhost:8080>';
 const API_KEY = '<API Key>';
-const VQ_NAME = '<Virtual Queue (VQ) name>';
-const EWT_API_PATH = '/engagement/v3/estimated-wait-time?virtual-queues=' + VQ_NAME;
+const COMMA_SEPARATED_VQ_NAMES = '<Comma separated Virtual Queue (VQ) names>';
+const EWT_API_PATH = '/engagement/v3/estimated-wait-time?virtual-queues=' + COMMA_SEPARATED_VQ_NAMES;
 //endregion
 
 async function getEstimatedWaitTime() {
