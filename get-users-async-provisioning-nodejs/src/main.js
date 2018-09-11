@@ -28,10 +28,10 @@ async function main() {
 		filterName : "FirstNameOrLastNameMatches",
 		filterParameters : "<agentFirstName>",
 		limit : 5
-	}, async (users) => {
+	}, async (results) => {
 		
 		//Do something with users here
-		
+		const users = results.users;
 		//region Log Out
 		//Log out of your Provisioning API session.
 		await provisioningApi.done();
