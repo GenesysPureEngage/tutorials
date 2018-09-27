@@ -76,7 +76,7 @@ workspaceApi.on('CallStateChanged', msg => {
 //endregion
 
 //region Authorization code grant
-//You'll need to use the Authentication API to get an authorization token. See https://github.com/GenesysPureEngage/authorization-code-grant-sample-app for an example of how to do this.
+//You'll need to use the Authentication API to get an authorization token. See [a sample application](https://github.com/GenesysPureEngage/authorization-code-grant-sample-app) for an example of how to do this.
 const authorizationToken = "<authorizationToken3>";
 //endregion
 
