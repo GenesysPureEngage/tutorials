@@ -9,7 +9,7 @@ const request = require('request-promise');
 const API_BASEPATH = '<API Base path. For example: http://localhost:3005>';
 const API_KEY = '<API Key>';
 const GROUP_NAME = '<Group name for Call-In>';
-const PHONE_NUMBER = '<The optional customer phone number including the area code>';
+const FROM_PHONE_NUMBER = '<The optional customer phone number including the area code>';
 const CALL_IN_API_PATH = '/engagement/v3/call-in/requests/create';
 //endregion
 
@@ -19,12 +19,12 @@ async function requestCallIn() {
     // First, you need to create the request body that is sent as part of the
     // HTTP POST request. The 'groupName' parameter is mandatory.
     // Tip: This group name is the name of Call-In configuration in Platform Administrator.
-    // The optional parameters 'phoneNumber' and 'userData' can be used to provide 
+    // The optional parameters 'fromPhoneNumber' and 'userData' can be used to provide 
     // additional information.
     // The detailed description of all the parameters is available in the Call-In API Reference.
     let bodyData = JSON.stringify({
         'groupName': GROUP_NAME,
-        'phoneNumber': PHONE_NUMBER
+        'fromPhoneNumber': FROM_PHONE_NUMBER
     });
     //endregion
 
@@ -56,7 +56,7 @@ async function requestCallIn() {
     // code ( 'accessCode' property ). The access code is available  only 
     // if the feature is enabled in the configuration group. Similarly, the 
     // 'fromPhoneNumber' property is available only if the request contained 
-    // the optional 'phoneNumber' parameter.
+    // the optional 'fromPhoneNumber' parameter.
     // Congratulations, you are done!
     try {
         let callInResponse = await request(requestOptions);
