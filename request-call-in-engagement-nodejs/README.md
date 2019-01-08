@@ -1,6 +1,6 @@
 # Request Call In
 
-This Tutorial shows you how to use the Engagement API to request a Call-In and get the phone number to call along with the access code. The access code is available only if the feature is enabled in the configuration group.
+This Tutorial shows you how to use the Engagement API to request a Click-To-Call-In and get the phone number to call along with the access code. The access code is available only if the feature is enabled in the configuration group.
 
 ## Getting Started
 
