@@ -30,6 +30,7 @@ public class Main {
         //region Create a new user
         //Create a new user with the specified values. Then extract the user's DBID from the Person object returned.
         User user = new User()
+			.isAgent(true)
         	.userName("<agentUserName>")
         	.password("<agentPassword>")
         	.firstName("<agentFirstName>")
