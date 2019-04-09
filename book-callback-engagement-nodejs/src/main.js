@@ -33,7 +33,7 @@ var callback = function(error, data, response) {
   if (error) {
     console.error(error);
   } else {
-    console.log('API called successfully. Returned data: ' + JSON.stringify(data));
+    console.log('Callback created: '+data["data"]["id"]);
   }
   
 };
