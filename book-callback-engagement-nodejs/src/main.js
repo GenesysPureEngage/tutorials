@@ -1,20 +1,28 @@
 var EngagementService = require('engagement-client-js');
 
+//region Edit constants
+// Start by editing the sample's constants:
+// API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+// SERVICE_NAME is the name of the Callback execution service that you need 
+// to provision in Designer.
+// API_KEY is the API key provided by Genesys that you must use with all the requests
+// to PureEngage Cloud APIs.
+// PHONE_NUMBER is the phone number where you want to receive the callback
 
-var xApiKey = "xApiKey_example"; 
-var apiUrl = "<apiUrl>";
+var API_KEY = "API_KEY"; 
+var API_BASEPATH = "API_BASEPATH";
 
-var serviceName = "serviceName_example";
-var phonenumber = "<phoneNumber>"; 
+var SERVICE_NAME = "SERVICE_NAME";
+var PHONE_NUMBER = "PHONE_NUMBER"; 
 
 var body = new EngagementService.CreateCallbackParms();
-body.phoneNumber = serviceName
-body.serviceName = phonenumber
+body.phoneNumber = SERVICE_NAME
+body.serviceName = PHONE_NUMBER
 
 //region Initialize new CallbacksApi class instance
 //We need to set the apiUrl for this API
 var callBackApi = new EngagementService.CallbacksApi();
-callBackApi.apiClient.basePath = apiUrl;
+callBackApi.apiClient.basePath = API_BASEPATH;
 //endregion
 //"https://api-g1-usw1.genhtcc.com/engagement/v3"
 
@@ -33,5 +41,5 @@ var callback = function(error, data, response) {
 
 //region Callback Creation
 //We book the callback by passing api key, the params and the callback to handle the response
-callBackApi.bookCallbackExternal("Jiy7p0ca6t5rIk96TbuYh5ZLjtqaGcrc575i6vN0  ",body,callback)
+callBackApi.bookCallbackExternal(API_KEY,body,callback)
 //endregion
