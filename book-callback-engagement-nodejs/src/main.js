@@ -16,8 +16,8 @@ var SERVICE_NAME = "SERVICE_NAME";
 var PHONE_NUMBER = "PHONE_NUMBER"; 
 
 var body = new EngagementService.CreateCallbackParms();
-body.phoneNumber = SERVICE_NAME
-body.serviceName = PHONE_NUMBER
+body.phoneNumber = PHONE_NUMBER
+body.serviceName = SERVICE_NAME
 
 //region Initialize new CallbacksApi class instance
 //We need to set the apiUrl for this API
