@@ -26,23 +26,17 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        //region Initialize Callback API Settings parameters
-	    //String xApiKey = "xApiKey_example"; // String | API Key. For example, Z2y9eiTiQZ4ceKNpxy1YAarhpvxJXPCj4rFrbVep
-        String xApiKey = "Jiy7p0ca6t5rIk96TbuYh5ZLjtqaGcrc575i6vN0";
-        //String apiUrl = "<apiUrl>";
-        String apiUrl = "https://api-g1-usw1.genhtcc.com/engagement/v3";
-        //endregion
 
-        //region Initialize Callback parameters
-        //String serviceName = "serviceName_example"; // String | Name of the callback execution service provisioned in GES
-        //String phonenumber = "<phoneNumber>"; // String | Phone Number. For example, 9059683457
-        String serviceName = "callback_test";
-        String phonenumber = "33782012279";
-        
+	    String xApiKey = "xApiKey_example"; 
+        String apiUrl = "<apiUrl>";
+
+        String serviceName = "serviceName_example";
+        String phonenumber = "<phoneNumber>"; 
+    
         CreateCallbackParms callbackParams = new CreateCallbackParms();
         callbackParams.setServiceName(serviceName);
         callbackParams.setPhoneNumber(phonenumber);
-        //endregion
+
 
         //region Initialize new CallbacksApi class instance
         //We need to set the apiUrl for this API, then we need to customize JSON serializer
@@ -65,19 +59,26 @@ public class Main {
             callbacksApi.bookCallbackExternalAsync( callbackParams, xApiKey,
                     new  ApiCallback<CreateCallbackResponse200>() {
 
-                        @Override
-                        public void onFailure(ApiException e, int statusCode,
-                                Map<String, List<String>> responseHeaders) {
-                                    logger.error("Callback error: "+ e.getMessage()+ " status code "+ statusCode);
-                                    return;
-                        }
-
+                        
+        //region Response Handling
+		//Get the Callback Id that was created 
                         @Override
                         public void onSuccess(CreateCallbackResponse200 result, int statusCode,
                                 Map<String, List<String>> responseHeaders) {
                                     logger.info("Callback created: "+ result.getData().getId());
                                     return;
                         }
+        //endregion
+
+        //region Error Handling
+		//Get the error code associated to the error 
+                        @Override
+                        public void onFailure(ApiException e, int statusCode,
+                                Map<String, List<String>> responseHeaders) {
+                                    logger.error("Callback error: "+ e.getMessage()+ " status code "+ statusCode);
+                                    return;
+                        }
+        //endregion
 
                         @Override
                         public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
