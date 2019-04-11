@@ -58,27 +58,25 @@ public class Main {
         try {
             callbacksApi.bookCallbackExternalAsync( callbackParams, xApiKey,
                     new  ApiCallback<CreateCallbackResponse200>() {
-
-                        
-        //region Response Handling
-		//Get the Callback Id that was created 
+                        //region Response Handling
+                        //Get the Callback Id that was created 
                         @Override
                         public void onSuccess(CreateCallbackResponse200 result, int statusCode,
                                 Map<String, List<String>> responseHeaders) {
                                     logger.info("Callback created: "+ result.getData().getId());
                                     return;
                         }
-        //endregion
+                        //endregion
 
-        //region Error Handling
-		//Get the error code associated to the error 
+                        //region Error Handling
+                        //Get the code associated to the error 
                         @Override
                         public void onFailure(ApiException e, int statusCode,
                                 Map<String, List<String>> responseHeaders) {
                                     logger.error("Callback error: "+ e.getMessage()+ " status code "+ statusCode);
                                     return;
                         }
-        //endregion
+                        //endregion
 
                         @Override
                         public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
