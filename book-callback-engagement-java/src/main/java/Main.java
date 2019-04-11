@@ -27,21 +27,30 @@ public class Main {
 
     public static void main(String[] args) {
 
-	    String xApiKey = "xApiKey_example"; 
-        String apiUrl = "<apiUrl>";
+        //region Edit constants
+        // Start by editing the sample's constants:
+        // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+        // SERVICE_NAME is the name of the Callback execution service that you need 
+        // to provision in Designer.
+        // API_KEY is the API key provided by Genesys that you must use with all the requests
+        // to PureEngage Cloud APIs.
+        // PHONE_NUMBER is the phone number where you want to receive the callback
 
-        String serviceName = "serviceName_example";
-        String phonenumber = "<phoneNumber>"; 
+	    String API_KEY = "API_KEY"; 
+        String API_BASEPATH = "API_BASEPATH";
+        String SERVICE_NAME = "SERVICE_NAME";
+        String PHONE_NUMBER = "PHONE_NUMBER"; 
+
     
         CreateCallbackParms callbackParams = new CreateCallbackParms();
-        callbackParams.setServiceName(serviceName);
-        callbackParams.setPhoneNumber(phonenumber);
+        callbackParams.setServiceName(SERVICE_NAME);
+        callbackParams.setPhoneNumber(PHONE_NUMBER);
 
 
         //region Initialize new CallbacksApi class instance
         //We need to set the apiUrl for this API, then we need to customize JSON serializer
         CallbacksApi callbacksApi = new CallbacksApi();
-        callbacksApi.getApiClient().setBasePath(apiUrl);
+        callbacksApi.getApiClient().setBasePath(API_BASEPATH);
         JSON.createGson().registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
             public JsonElement serialize(Date date, Type typeOfSrc, JsonSerializationContext context) {
                 TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -56,7 +65,7 @@ public class Main {
         //endregion
 
         try {
-            callbacksApi.bookCallbackExternalAsync( callbackParams, xApiKey,
+            callbacksApi.bookCallbackExternalAsync( callbackParams, API_KEY,
                     new  ApiCallback<CreateCallbackResponse200>() {
                         //region Response Handling
                         //Get the Callback Id that was created 
