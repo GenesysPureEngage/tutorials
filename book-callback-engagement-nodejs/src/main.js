@@ -1,4 +1,4 @@
-var EngagementService = require('engagement-client-js');
+const EngagementService = require('engagement-client-js');
 
 //region Edit the sample’s constants:
 
