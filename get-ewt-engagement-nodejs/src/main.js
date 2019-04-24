@@ -1,66 +1,45 @@
-const request = require('request-promise');
-//region Edit constants
-// Note: You must configure a Virtual Queue in Platform Administrator.
-// Start by editing the sample's constants:
-// API_BASEPATH is the base URL of the PureEngage Cloud APIs.
+const EngagementService = require('engagement-client-js');
+
+//region Edit the sample’s constants:
+
+// API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+var API_KEY = "API_KEY"; 
+
+// API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+var API_BASEPATH = "API_BASEPATH";
+
 // COMMA_SEPARATED_VQ_NAMES is the comma separated list of the Virtual Queue names for which Estimated Wait Time (EWT) is required.
-// API_KEY is the API key provided by Genesys that you must use with all the requests
-// to PureEngage Cloud APIs.
-const API_BASEPATH = '<API Base path, for example http://localhost:8080>';
-const API_KEY = '<API Key>';
-const COMMA_SEPARATED_VQ_NAMES = '<Comma separated Virtual Queue (VQ) names>';
-const EWT_API_PATH = '/engagement/v3/estimated-wait-time?virtual-queues=' + COMMA_SEPARATED_VQ_NAMES;
+var COMMA_SEPARATED_VQ_NAMES = '<Comma separated Virtual Queue (VQ) names>';
+
 //endregion
 
 async function getEstimatedWaitTime() {
-    //region Create the request options.
-    // Create the options that are sent as part of the request.  These options
-    // might vary slightly according to the client module that is used to handle 
-    // the HTTP request (request-promise in this example).
-    // In the options, specify the API URL, the method as GET, and the header parameters.
-    // The API_BASEPATH is the base URL to access of the PureEngage Cloud APIs.
-    // The VQ name specified in the URL is the name of the Virtual Queue that is used to
-    // get the Estimated Waiting Time (EWT).
-    // The header parameter 'Content-Type' must be 'application/json'.
-    // The header parameter 'x-api-key' is the API key provided by Genesys to use with all 
-    // the requests to PureEngage Cloud APIs. 
-    // Additional parameters are available to get the Estimated Waiting Time. You can find
-    // the list of these optional parameters and detailed descriptions in the 
-    // Estimated Wait Time API Reference.
-    const options = {
-        method: 'GET',
-        uri: API_BASEPATH + EWT_API_PATH,
-        headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY
-        },
-        json: true // Automatically parses the JSON string in the response
-    };
+    //region Initialize the new CallbacksApi class instance.
+    var estimatedWaitTimeApi = new EngagementService.EstimatedWaitTimeApi();
+    estimatedWaitTimeApi.apiClient.basePath = API_BASEPATH;
+    estimatedWaitTimeApi.apiClient.enableCookies = false
     //endregion
 
     //region Send the request
     // Send the request and parse the results.
     // Congratulations, you are done!
     try {
-        const response = await request(options);
-        if (!response) {
-            console.log('Invalid null or undefined response.');
-            return;
-        }
+        var opts={mode: 'mode1'}
+        const response = await estimatedWaitTimeApi.estimatedWaitTimeAPI1(API_KEY, COMMA_SEPARATED_VQ_NAMES, opts) 
         console.log('Request status corrId : ' + response.status.corrId );
-        console.log('Estimated Wait Time (EWT) response. Number of items in response array: ' + response.data.length);
-        response.data.forEach( (ewtItem, index) => {
+        //console.log('Estimated Wait Time (EWT) response. Number of items in response array: ' + response.data.length);
+        for(var i =0; i < response.data.length; i++){
             // If there is a problem getting the Estimated Wait Time for a Virtual Queue then -1 is returned as the value of 'estimatedWaitTime' property.
             // The 'message' property provides information about the error.
-            if( ewtItem.estimatedWaitTime >= 0 ) {
-                console.log('Response item index ' + index + ', Virtual Queue : ' + ewtItem.virtualQueue + ', Estimated Wait Time (EWT) in seconds : ' + ewtItem.estimatedWaitTime );
+            if( response.data[i].estimatedWaitTime >= 0 ) {
+                console.log('Response item index ' + i + ', Virtual Queue : ' + response.data[i].virtualQueue + ', Estimated Wait Time (EWT) in seconds : ' + response.data[i].estimatedWaitTime );
             } else {
-                console.log('Response item index ' + index + ', Virtual Queue : ' + ewtItem.virtualQueue + ', Error Message : ' + ewtItem.message );
+                console.log('Response item index ' + i + ', Virtual Queue : ' + response.data[i].virtualQueue + ', Error Message : ' + response.data[i].message );
             }
-        });
+        }
     }
     catch (error) {
-        console.log('Failed to get Estimated Wait Time (EWT). Error : ' + error);
+        console.log('Failed to get EWT. Error : ' + error);
     }
     //endregion
 }
