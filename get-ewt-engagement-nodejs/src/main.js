@@ -27,7 +27,6 @@ async function getEstimatedWaitTime() {
         var opts={mode: 'mode1'}
         const response = await estimatedWaitTimeApi.estimatedWaitTimeAPI1(API_KEY, COMMA_SEPARATED_VQ_NAMES, opts) 
         console.log('Request status corrId : ' + response.status.corrId );
-        //console.log('Estimated Wait Time (EWT) response. Number of items in response array: ' + response.data.length);
         for(var i =0; i < response.data.length; i++){
             // If there is a problem getting the Estimated Wait Time for a Virtual Queue then -1 is returned as the value of 'estimatedWaitTime' property.
             // The 'message' property provides information about the error.
