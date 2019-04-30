@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <timestamp key="bySecond" datePattern="yyyyMMdd'T'HHmmss"/>
+    
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%-5level] %m%n</pattern>
+        </encoder>
+        <target>System.out</target>
+    </appender>
+  
+    <logger name="com.genesys" level="debug"/>
+  
+    <root level="info">
+        <appender-ref ref="Console" />
+    </root>
+</configuration>

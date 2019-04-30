@@ -1,0 +1,5 @@
+title: Get Estimated Wait Time (EWT)
+description: This tutorial shows how to use the Estimated Wait Time (EWT) API to get the Estimated Wait Time before an agent becomes available and processes a call.
+categories: 
+  - engagement
+displayName: Java
