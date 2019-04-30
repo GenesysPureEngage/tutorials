@@ -32,15 +32,11 @@ public class Main {
         // API_KEY is the API key provided by Genesys that you must use with all the requests
         // to PureEngage Cloud APIs.
 
-	    //String API_KEY = "API_KEY"; 
-        //String API_BASEPATH = "API_BASEPATH";
-        String API_KEY = "Jiy7p0ca6t5rIk96TbuYh5ZLjtqaGcrc575i6vN0"; 
-        String API_BASEPATH = "https://api-g1-usw1.genhtcc.com/engagement/v3";
+	String API_KEY = "API_KEY"; 
+        String API_BASEPATH = "API_BASEPATH";
         
-       // COMMA_SEPARATED_VQ_NAMES is the comma separated list of the Virtual Queue names for which Estimated Wait Time (EWT) is required.
-        //String COMMA_SEPARATED_VQ_NAMES = "<Comma separated Virtual Queue (VQ) names>";
-        String COMMA_SEPARATED_VQ_NAMES = "VQ_Dev_1";
-
+        // COMMA_SEPARATED_VQ_NAMES is the comma separated list of the Virtual Queue names for which Estimated Wait Time (EWT) is required.
+        String COMMA_SEPARATED_VQ_NAMES = "<Comma separated Virtual Queue (VQ) names>";
 
         //region Initialize the new EstimatedWaitTimeApi class instance.
         //We need to set the apiUrl for this API, then we need to customize JSON serializer
