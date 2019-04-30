@@ -30,7 +30,7 @@ async function requestClickToCallIn() {
     var requestClientToCallIn = new EngagementService.CallInRequestsParms();
     requestClientToCallIn.fromPhoneNumber = FROM_PHONE_NUMBER;
     requestClientToCallIn.groupName =GROUP_NAME;
-    requestClickToCallIn.userData = {
+    requestClientToCallIn.userData = {
         "priority": "high",
         "email": "customer@email.com"
     };
