@@ -28,7 +28,6 @@ async function requestClickToCallIn() {
     // additional information.
     // The detailed description of all the parameters is available in the Click-To-Call-In API Reference.
     var requestClientToCallIn = new EngagementService.CallInRequestsParms();
-    //requestClientToCallIn.groupName = GROUP_NAME;
     requestClientToCallIn.fromPhoneNumber = FROM_PHONE_NUMBER;
     requestClientToCallIn.groupName =GROUP_NAME;
     requestClickToCallIn.userData = {
