@@ -26,17 +26,16 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Edit constants
-        // Start by editing the sample's constants:
+        //region Constants are set through environment variables
+       
+        // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+        String API_KEY = System.getenv("API_KEY"); 
+        
         // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
-        // API_KEY is the API key provided by Genesys that you must use with all the requests
-        // to PureEngage Cloud APIs.
-
-	String API_KEY = "API_KEY"; 
-        String API_BASEPATH = "API_BASEPATH";
+        String API_BASEPATH = System.getenv("API_BASEPATH"); 
         
         // COMMA_SEPARATED_VQ_NAMES is the comma separated list of the Virtual Queue names for which Estimated Wait Time (EWT) is required.
-        String COMMA_SEPARATED_VQ_NAMES = "<Comma separated Virtual Queue (VQ) names>";
+        String COMMA_SEPARATED_VQ_NAMES =  System.getenv("COMMA_SEPARATED_VQ_NAMES");
 
         //region Initialize the new EstimatedWaitTimeApi class instance.
         //We need to set the apiUrl for this API, then we need to customize JSON serializer

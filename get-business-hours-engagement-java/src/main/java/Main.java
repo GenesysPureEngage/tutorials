@@ -1,25 +1,11 @@
 
-import java.lang.reflect.Type;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import com.genesys.engagement.ApiCallback;
 import com.genesys.engagement.ApiException;
-import com.genesys.engagement.JSON;
 import com.genesys.engagement.api.AvailabilityApi;
-import com.genesys.engagement.api.CallbacksApi;
-import com.genesys.engagement.model.CreateCallbackParms;
-import com.genesys.engagement.model.CreateCallbackResponse200;
 import com.genesys.engagement.model.OpenForResponse200;
-import com.genesys.engagement.model.OpenForStatus500;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.google.gson.internal.LinkedTreeMap;
 
 import org.slf4j.Logger;

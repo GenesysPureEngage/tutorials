@@ -10,9 +10,7 @@
   ],
   "contributors": [],
   "dependencies": {
-    "engagement-client-js": "^9.0.18",
-    "request": "latest",
-    "request-promise": "latest"
+    "engagement-client-js": "^9.0.18"
   },
   "main": "src/main.js"
 }
