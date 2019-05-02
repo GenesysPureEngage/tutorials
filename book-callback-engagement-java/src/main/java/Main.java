@@ -27,20 +27,21 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Edit constants
-        // Start by editing the sample's constants:
+        //region Constants are set through environment variables.
+
+	    // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+        String API_KEY = System.getenv("API_KEY"); 
+
         // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
-        // SERVICE_NAME is the name of the Callback execution service that you need 
-        // to provision in Designer.
-        // API_KEY is the API key provided by Genesys that you must use with all the requests
-        // to PureEngage Cloud APIs.
+        String API_BASEPATH = System.getenv("API_BASEPATH");
+
+        // SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
+        String SERVICE_NAME = System.getenv("SERVICE_NAME");
+        
         // PHONE_NUMBER is the phone number where you want to receive the callback
-
-	String API_KEY = "API_KEY"; 
-        String API_BASEPATH = "API_BASEPATH";
-        String SERVICE_NAME = "SERVICE_NAME";
-        String PHONE_NUMBER = "PHONE_NUMBER"; 
-
+        String PHONE_NUMBER = System.getenv("PHONE_NUMBER"); 
+        
+        //endregion
     
         CreateCallbackParms callbackParams = new CreateCallbackParms();
         callbackParams.setServiceName(SERVICE_NAME);
