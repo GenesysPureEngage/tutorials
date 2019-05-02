@@ -26,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Constants are set through environment variables
+        //region Constants are set through environment variables.
        
         // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
         String API_KEY = System.getenv("API_KEY"); 

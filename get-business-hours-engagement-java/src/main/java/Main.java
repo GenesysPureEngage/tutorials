@@ -17,16 +17,16 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Edit the sample’s constants:
+        //region Constants are set through environment variables.
 
         // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
-        String API_KEY = "API_KEY"; 
+        String API_KEY = System.getenv("API_KEY"); 
 
         // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
-        String API_BASEPATH = "API_BASEPATH";
+        String API_BASEPATH = System.getenv("API_BASEPATH");
 
         // BUSINESSHOURS_SERVICE is the name of the Business hours service that you need to provision in Designer.
-        String BUSINESSHOURS_SERVICE = "BUSINESSHOURS_SERVICE";
+        String BUSINESSHOURS_SERVICE = System.getenv("BUSINESSHOURS_SERVICE");
 
         //endregion
 
