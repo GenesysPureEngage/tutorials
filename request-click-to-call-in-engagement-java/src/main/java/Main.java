@@ -1,16 +1,12 @@
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import com.genesys.engagement.ApiCallback;
 import com.genesys.engagement.ApiException;
-import com.genesys.engagement.JSON;
 import com.genesys.engagement.api.CallInApi;
 import com.genesys.engagement.model.CallInRequestsParms;
 import com.genesys.engagement.model.CallInRequestsResponse200;
-import com.genesys.engagement.model.CallInRequestsResponse400;
-import com.google.gson.Gson;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,57 +17,51 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Constants are set through environment variables.
+        //region Constants Initialization.
 
-        // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+        //API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
         String API_KEY = System.getenv("API_KEY"); 
 
-        // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+        //API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
         String API_BASEPATH = System.getenv("API_BASEPATH");
 
-        // GROUP_NAME is the name of the Click-To-Call-In configuration group. The Click-To-Call-In configuration 
-        // is created in Platform Administrator.
+        //GROUP_NAME is the name of the Click-To-Call-In configuration group. The Click-To-Call-In configuration is created in Platform Administrator.
         String GROUP_NAME = System.getenv("GROUP_NAME");
 
-        // FROM_PHONE_NUMBER is the phone number associated with the request.
+        //FROM_PHONE_NUMBER is the phone number associated with the request.
         String FROM_PHONE_NUMBER = System.getenv("FROM_PHONE_NUMBER");
         
         //endregion
 
 
-        //region Create the Click-To-Call-In request body.
-        // First, you need to create the request body that is sent as part of the
-        // HTTP POST request. The 'groupName' parameter is mandatory.
-        // Tip: This group name is the name of Click-To-Call-In configuration in Platform Administrator.
-        // The optional parameters 'fromPhoneNumber' and 'userData' can be used to provide 
-        // additional information.
-        // The detailed description of all the parameters is available in the Click-To-Call-In API Reference.
+        //region Initialize AvailabilityApi instance
+        //First, you need to create the request body that is sent as part of the
+        //HTTP POST request. The 'groupName' parameter is mandatory.
+        //Tip: This group name is the name of Click-To-Call-In configuration in Platform Administrator.
+        //The optional parameters 'fromPhoneNumber' and 'userData' can be used to provide 
+        //additional information.
+        //The detailed description of all the parameters is available in the Click-To-Call-In API Reference.
         CallInRequestsParms requestClientToCallIn = new CallInRequestsParms();
         requestClientToCallIn.setFromPhoneNumber(FROM_PHONE_NUMBER);
         requestClientToCallIn.setGroupName(GROUP_NAME);
         requestClientToCallIn.setUserData("{}");
+        //endregion
         
-        logger.info(requestClientToCallIn.toString());
-        
-        //requestClientToCallIn.setCallbackServiceId(null);
-        
-
-
-        //region Initialize the new CallbacksApi class instance.
+        //region Initialize CallInApi instance
         CallInApi callInApi = new CallInApi();
         callInApi.getApiClient().setBasePath(API_BASEPATH);
         
         //endregion
+
         //region Send the request
-        // Send the request and parse the results. The user can call the 
-        // phone number ( 'toPhoneNumber' property ) in the response before the 
-        // expiration time ( 'expirationTime' property ) and type in the access 
-        // code ( 'accessCode' property ). The access code is available  only 
-        // if the feature is enabled in the configuration group. Similarly, the 
-        // 'fromPhoneNumber' property is available only if the request contained 
-        // the optional 'fromPhoneNumber' parameter.
-        // Congratulations, you are done!
-    
+        //Send the request and parse the results. The user can call the 
+        //phone number ( 'toPhoneNumber' property ) in the response before the 
+        //expiration time ( 'expirationTime' property ) and type in the access 
+        //code ( 'accessCode' property ). The access code is available  only 
+        //if the feature is enabled in the configuration group. Similarly, the 
+        //'fromPhoneNumber' property is available only if the request contained 
+        //the optional 'fromPhoneNumber' parameter.
+            
         try {
             callInApi.callInRequestsAsync(requestClientToCallIn, API_KEY, new  ApiCallback<CallInRequestsResponse200>() {
                 //region Response Handling
