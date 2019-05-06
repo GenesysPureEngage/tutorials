@@ -2,16 +2,16 @@ const EngagementService = require('engagement-client-js');
 
 //region Edit the sample’s constants:
 
-// API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+//API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
 var API_KEY = "API_KEY"; 
 
-// API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+//API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
 var API_BASEPATH = "API_BASEPATH";
 
-// SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
+//SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
 var SERVICE_NAME = "SERVICE_NAME";
 
-// PHONE_NUMBER is the phone number where you want to receive the callback.
+//PHONE_NUMBER is the phone number where you want to receive the callback.
 var PHONE_NUMBER = "PHONE_NUMBER"; 
 
 //endregion
