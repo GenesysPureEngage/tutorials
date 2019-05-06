@@ -16,23 +16,22 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Constants are set through environment variables.
+        //region Constants Initialization.
 
-        // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+        //API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
         String API_KEY = System.getenv("API_KEY"); 
 
-        // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+        //API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
         String API_BASEPATH = System.getenv("API_BASEPATH");
 
-        // SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
+        //SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
         String SERVICE_NAME = System.getenv("SERVICE_NAME");
 
         //endregion
 
+        //region Initialize AvailabilityApi instance
 
-
-        //region Initialize new AvailabilityApi class instance
-        //We need to set the apiUrl for this API
+        //We need to set the urrl for this API
         AvailabilityApi availabilityApi = new AvailabilityApi();
         availabilityApi.getApiClient().setBasePath(API_BASEPATH);
         //endregion
