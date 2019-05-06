@@ -27,18 +27,18 @@ public class Main {
 
     public static void main(String[] args) {
 
-        //region Constants are set through environment variables.
+        //region Constants Initialization.
 
-	    // API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
+	    //API_KEY is the API key provided by Genesys that you must use with all the requests // to PureEngage Cloud APIs.
         String API_KEY = System.getenv("API_KEY"); 
 
-        // API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
+        //API_BASEPATH is the base URL used to access PureEngage Cloud APIs.
         String API_BASEPATH = System.getenv("API_BASEPATH");
 
-        // SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
+        //SERVICE_NAME is the name of the Callback execution service that you need to provision in Designer.
         String SERVICE_NAME = System.getenv("SERVICE_NAME");
         
-        // PHONE_NUMBER is the phone number where you want to receive the callback
+        //PHONE_NUMBER is the phone number where you want to receive the callback
         String PHONE_NUMBER = System.getenv("PHONE_NUMBER"); 
         
         //endregion
@@ -48,8 +48,8 @@ public class Main {
         callbackParams.setPhoneNumber(PHONE_NUMBER);
 
 
-        //region Initialize new CallbacksApi class instance
-        //We need to set the apiUrl for this API, then we need to customize JSON serializer
+        //region Initialize CallbacksApi instance
+        //We need to set the url for this API, then we need to customize JSON serializer
         CallbacksApi callbacksApi = new CallbacksApi();
         callbacksApi.getApiClient().setBasePath(API_BASEPATH);
         JSON.createGson().registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
