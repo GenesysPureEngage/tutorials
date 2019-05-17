@@ -2,11 +2,10 @@
 import java.util.List;
 import java.util.Map;
 
-import com.genesys.engagement.ApiCallback;
-import com.genesys.engagement.ApiException;
-import com.genesys.engagement.api.AvailabilityApi;
-import com.genesys.engagement.model.OpenForResponse200;
-import com.google.gson.internal.LinkedTreeMap;
+import com.genesys.internal.common.ApiCallback;
+import com.genesys.internal.common.ApiException;
+import com.genesys.internal.engagement.api.AvailabilityApi;
+import com.genesys.internal.engagement.model.OpenForResponse200;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +46,7 @@ public class Main {
                         public void onSuccess(OpenForResponse200 result, int statusCode,
                                 Map<String, List<String>> responseHeaders) {
                                     logger.info("Request status corrId : " + result.getStatus().getCorrId() );
-                                    logger.info("Business is open for : " + ((LinkedTreeMap)result.getData()).get("openFor")+ " seconds" );                                   
+                                    logger.info("Business is open for : " + (result.getData()).getOpenFor()+ " seconds" );                                   
                                     return;
                         }
                         //endregion
