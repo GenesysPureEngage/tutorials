@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.genesys.engagement.ApiCallback;
-import com.genesys.engagement.ApiException;
-import com.genesys.engagement.JSON;
-import com.genesys.engagement.api.EstimatedWaitTimeApi;
-import com.genesys.engagement.model.EstimatedWaitTimeResponse200;
+import com.genesys.internal.common.ApiCallback;
+import com.genesys.internal.common.ApiException;
+import com.genesys.internal.common.JSON;
+import com.genesys.internal.engagement.api.EstimatedWaitTimeApi;
+import com.genesys.internal.engagement.model.EstimatedWaitTimeResponse200;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
@@ -68,7 +68,7 @@ public class Main {
                                     for(int i =0; i < result.getData().size(); i++){
                                         // If there is a problem getting the Estimated Wait Time for a Virtual Queue then -1 is returned as the value of 'estimatedWaitTime' property.
                                         // The 'message' property provides information about the error.
-                                        if( result.getData().get(i).getEstimatedWaitTime() >= 0 ) {
+                                        if( result.getData().get(i).getEstimatedWaitTime().intValue() >= 0 ) {
                                             logger.info("Response item index " + i + ", Virtual Queue : " + result.getData().get(i).getVirtualQueue() + ", Estimated Wait Time (EWT) in seconds : " + result.getData().get(i).getEstimatedWaitTime());
                                         } else {
                                             logger.info("Response item index " + i + ", Virtual Queue : " + result.getData().get(i).getVirtualQueue() + ", Error Message : " + result.getData().get(i).getMessage() );
