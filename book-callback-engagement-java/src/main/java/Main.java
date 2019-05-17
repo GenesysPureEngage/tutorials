@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.genesys.engagement.ApiCallback;
-import com.genesys.engagement.ApiException;
-import com.genesys.engagement.JSON;
-import com.genesys.engagement.api.CallbacksApi;
-import com.genesys.engagement.model.CreateCallbackParms;
-import com.genesys.engagement.model.CreateCallbackResponse200;
+import com.genesys.internal.common.ApiCallback;
+import com.genesys.internal.common.ApiException;
+import com.genesys.internal.common.JSON;
+import com.genesys.internal.engagement.api.CallbacksApi;
+import com.genesys.internal.engagement.model.CreateCallbackParms;
+import com.genesys.internal.engagement.model.CreateCallbackResponse200;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
@@ -66,7 +66,7 @@ public class Main {
         //endregion
 
         try {
-            callbacksApi.bookCallbackExternalAsync( callbackParams, API_KEY,
+            callbacksApi.bookCallbackExternalAsync( API_KEY, callbackParams ,
                     new  ApiCallback<CreateCallbackResponse200>() {
                         //region Response Handling
                         //Get the Callback Id that was created 
