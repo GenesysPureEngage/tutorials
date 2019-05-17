@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     testCompile 'junit:junit:4.10'
-    compile 'com.genesys:engagement-java:latest.integration'
+    compile 'com.genesys:engagement-java:1.0.1'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'ch.qos.logback:logback-core:1.1.7'
     compile 'ch.qos.logback:logback-classic:1.1.7'

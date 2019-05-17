@@ -2,11 +2,11 @@
 import java.util.List;
 import java.util.Map;
 
-import com.genesys.engagement.ApiCallback;
-import com.genesys.engagement.ApiException;
-import com.genesys.engagement.api.CallInApi;
-import com.genesys.engagement.model.CallInRequestsParms;
-import com.genesys.engagement.model.CallInRequestsResponse200;
+import com.genesys.internal.common.ApiCallback;
+import com.genesys.internal.common.ApiException;
+import com.genesys.internal.engagement.api.CallInApi;
+import com.genesys.internal.engagement.model.CallInRequestsParms;
+import com.genesys.internal.engagement.model.CallInRequestsResponse200;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class Main {
         //the optional 'fromPhoneNumber' parameter.
             
         try {
-            callInApi.callInRequestsAsync(requestClientToCallIn, API_KEY, new  ApiCallback<CallInRequestsResponse200>() {
+            callInApi.callInRequestsAsync(API_KEY, requestClientToCallIn, new  ApiCallback<CallInRequestsResponse200>() {
                 //region Response Handling
                 //Get the Callback Id that was created 
                 @Override
