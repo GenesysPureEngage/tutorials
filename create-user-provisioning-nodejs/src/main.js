@@ -23,11 +23,11 @@ async function main() {
 	//region Create a new user
 	//Create a new user with the specified values.
 	const user = {
-		userName: "<userName>",
-		firstName: "<firstName>",
-		lastName: "<lastName>",
-		password: "<password>",
-		accessGroup: ['<agentAccessGroups>']
+		userName: "<agentUserName>",
+		firstName: "<agentFirstName>",
+		lastName: "<agentLastName>",
+		password: "<agentPassword>",
+		accessGroup: ['<agentAccessGroup>']
 	};
 	await provisioningApi.users.addUser(user);
 	//endregion
