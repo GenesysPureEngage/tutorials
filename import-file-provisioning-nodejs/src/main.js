@@ -50,7 +50,7 @@ async function main() {
 	
 	//region Log Out
 	//Log out of your Provisioning API session.
-	await provisioningApi.done();
+	await provisioningApi.destroy();
 	//endregion
 }
 
