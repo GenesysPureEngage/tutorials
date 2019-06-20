@@ -22,7 +22,7 @@ public class Main {
             //region Initialization
             //Initialize the Workspace API with the authorization token from the previous step. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
             User user = api.initialize(authorizationToken);
-            api.activateChannels(user.getAgentId(), user.getAgentId());
+            api.activateChannels(user.getAgentId(), user.getDefaultPlace());
             api.voice().setAgentReady();
             
             //region Search for targets
