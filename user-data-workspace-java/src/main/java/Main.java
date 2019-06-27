@@ -1,4 +1,3 @@
-
 import com.genesys.workspace.WorkspaceApi;
 import com.genesys.workspace.common.WorkspaceApiException;
 import com.genesys.workspace.models.Call;
@@ -100,7 +99,7 @@ public class Main {
         //region Initialization
         //Initialize the Workspace API with the authorization token from the previous step. Finally, call `activateChannels()` to initialize the voice channel for the agent and DN.
         User user = api.initialize(authorizationToken);
-        api.activateChannels(user.getAgentId(), user.getAgentId());
+        api.activateChannels(user.getAgentId(), user.getDefaultPlace());
         //endregion
 
         System.out.println("Waiting for completion...");

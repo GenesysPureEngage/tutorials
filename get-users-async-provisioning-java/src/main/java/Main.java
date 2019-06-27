@@ -2,10 +2,13 @@ import com.genesys.provisioning.ProvisioningApi;
 import com.genesys.provisioning.ProvisioningApiException;
 import com.genesys.provisioning.models.UserSearchParams;
 import com.genesys.provisioning.models.User;
+import java.util.concurrent.CompletableFuture;
 
 import java.util.Map;
 
 public class Main {
+	static final CompletableFuture<Void> done = new CompletableFuture<>();
+	
     public static void main(String[] args) throws Exception {
     	
         final String apiKey = "<apiKey>";
@@ -38,30 +41,13 @@ public class Main {
 			System.out.println(users);
 			//Do something with users here.
 			
-			try {
-				//region Log out
-				//Log out to end our Provisioning API session.
-				provisioningApi.done();
-				//endregion
-       		} catch(ProvisioningApiException e) {
-       			System.out.println(e);
-       		}
+			done.complete(null);
 		});
 		//endregion
-		
-        
+		done.get();
+        //region Log out
+		//Log out to end our Provisioning API session.
+		provisioningApi.done();
+		//endregion
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

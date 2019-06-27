@@ -24,11 +24,10 @@ public class Main {
         //The ProvisioningApi needs to be initialized with either an authorization token or an authorization code retrieved from the auth service.
         provisioningApi.initializeWithToken(authorizationToken);
 		//endregion
-		
-		
+
 		//region Get Options
 		//Get the options as a Map<String, Object>.
-		Map<String, Object> options = provisioningApi.options.getOptions("<personDBID>","<agentGroupDBID>","<application>").getOptions();
+		Map<String, Object> options = provisioningApi.options.getOptions("<personDBID>","<agentGroupDBID>").getOptions();
 		//endregion
 		
 		options.put("<property>", "<value>");
@@ -36,7 +35,7 @@ public class Main {
 		
 		//region Modify Options
 		//After the options object has been changed, update them using the API.
-		provisioningApi.options.modifyOptions("<application>", options);
+		//provisioningApi.options.modifyOptions(options);
 		//endregion
 		
         //region Log out
@@ -45,4 +44,3 @@ public class Main {
         //endregion
     }
 }
-

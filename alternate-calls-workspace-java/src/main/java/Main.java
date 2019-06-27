@@ -101,7 +101,7 @@ public class Main {
         User user = api.initialize(authorizationToken);
         
         System.out.println("Activating channels");
-        api.activateChannels(user.getAgentId(), user.getAgentId());
+        api.activateChannels(user.getAgentId(), user.getDefaultPlace());
         //endregion
 
         System.out.println("Waiting for completion...");
@@ -111,16 +111,3 @@ public class Main {
         api.destroy();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
