@@ -1,0 +1,18 @@
+{
+  "name": "get-availability-engagement-nodejs",
+  "version": "1.0.0",
+  "keywords": [
+    "util",
+    "functional",
+    "server",
+    "client",
+    "browser"
+  ],
+  "contributors": [],
+  "dependencies": {
+    "engagement-client-js": "^9.0.29",
+    "request": "latest",
+    "request-promise": "latest"
+  },
+  "main": "src/main.js"
+}
