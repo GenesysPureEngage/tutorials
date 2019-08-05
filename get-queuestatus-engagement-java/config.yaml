@@ -1,0 +1,5 @@
+title: Get Queue Status
+description: This Tutorial shows you how to use Queue-Status API to Retrieves the estimated-wait-time and whether the queue accepts immediate and/or scheduled callbacks.
+categories: 
+  - engagement
+displayName: Java
