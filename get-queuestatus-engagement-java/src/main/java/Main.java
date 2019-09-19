@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // region Constants Initialization.
+        //region Constants Initialization.
 
         // API_KEY is the API key provided by Genesys that you must use with all the
         // requests // to PureEngage Cloud APIs.
@@ -28,19 +28,19 @@ public class Main {
         //QUEUE_NAME is the name  of the callback queue..
         String QUEUE_NAME = System.getenv("QUEUE_NAME");
 
-        // endregion
+        //endregion
 
-        // region Initialize AvailabilityApi instance
+        //region Initialize AvailabilityApi instance
 
         // We need to set the urrl for this API
         QueueStatusApi queueStatusApi = new QueueStatusApi();
         queueStatusApi.getApiClient().setBasePath(API_BASEPATH);
-        // endregion
+        //endregion
 
         try {
             queueStatusApi.queryQueueStatusAsync(API_KEY, QUEUE_NAME
                     , new ApiCallback<QueueStatusResponse200>() {
-                        // region Response handling
+                        //region Response handling
                         // Get the queue status
                         @Override
                         public void onSuccess(QueueStatusResponse200 result, int statusCode,
@@ -49,9 +49,9 @@ public class Main {
                             logger.info("ewt:"+result.getData().getEwt()+", offerImmediateCallback: "+result.getData().isOfferImmediateCallback()+", offerScheduledCallback: "+result.getData().isOfferScheduledCallback());
                             return;
                         }
-                        // endregion
+                        //endregion
 
-                        // region Error Handling
+                        //region Error Handling
                         // Get the code associated to the error
                         @Override
                         public void onFailure(ApiException e, int statusCode,
@@ -60,7 +60,7 @@ public class Main {
                                     "QueueStatusApi call error: " + e.getMessage() + " status code " + statusCode);
                             return;
                         }
-                        // endregion
+                        //endregion
 
                         @Override
                         public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {

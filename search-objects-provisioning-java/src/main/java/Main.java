@@ -66,7 +66,7 @@ public class Main {
         int totalDnGroupCount = dnGroupSearchResults.getTotalCount();
 		//endregion
 		
-		// region Search for Skills
+		//region Search for Skills
 		//Search for skills given the specified search parameters. 
 		//Extract the list of Skill objects and the total results count from the Results object returned by the API.
         Results<Skill> skillSearchResults = provisioningApi.objects.searchSkills(new SearchParams()
