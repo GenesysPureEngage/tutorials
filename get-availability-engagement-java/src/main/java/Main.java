@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // region Constants Initialization.
+        //region Constants Initialization.
 
         // API_KEY is the API key provided by Genesys that you must use with all the
         // requests // to PureEngage Cloud APIs.
@@ -29,19 +29,19 @@ public class Main {
         // provision in Designer.
         String SERVICE_NAME = System.getenv("SERVICE_NAME");
 
-        // endregion
+        //endregion
 
-        // region Initialize AvailabilityApi instance
+        //region Initialize AvailabilityApi instance
 
         // We need to set the urrl for this API
         AvailabilityApi availabilityApi = new AvailabilityApi();
         availabilityApi.getApiClient().setBasePath(API_BASEPATH);
-        // endregion
+        //endregion
 
         try {
             availabilityApi.queryAvailabilityV2Async(API_KEY, SERVICE_NAME, null, null, null, null, null, null, null,
                     true, new ApiCallback<AvailabilitiesResponse200>() {
-                        // region Response Handling
+                        //region Response Handling
                         // Get the Callback Id that was created
                         @Override
                         public void onSuccess(AvailabilitiesResponse200 result, int statusCode,
@@ -52,9 +52,9 @@ public class Main {
                                     + result.getData().getSlots().size());
                             return;
                         }
-                        // endregion
+                        //endregion
 
-                        // region Error Handling
+                        //region Error Handling
                         // Get the code associated to the error
                         @Override
                         public void onFailure(ApiException e, int statusCode,
@@ -63,7 +63,7 @@ public class Main {
                                     "AvailabilityApi call error: " + e.getMessage() + " status code " + statusCode);
                             return;
                         }
-                        // endregion
+                        //endregion
 
                         @Override
                         public void onUploadProgress(long bytesWritten, long contentLength, boolean done) {
