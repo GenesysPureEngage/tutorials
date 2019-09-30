@@ -1,0 +1,25 @@
+{
+  "name": "provisioning-test",
+  "version": "1.0.0",
+  "description": "Provisioning API test module",
+  "main": "/src/index.js",
+  "scripts": {
+    "run": "/src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Provisionin",
+    "API"
+  ],
+  "author": "Genesys Inc",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "cometd": "^4.0.4",
+    "monkeypatch": "^1.0.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "util": "^0.12.1",
+    "uuid": "^3.3.3"
+  }
+}
